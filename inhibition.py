@@ -5,6 +5,7 @@ import copy
 import itertools
 import logging
 import time
+from multiprocessing import Pool
 
 
 logging.basicConfig(level=logging.INFO)
@@ -74,7 +75,7 @@ def generate_bin_of_edges(g, m):
 
 def recursive_teardown(node, d, node_count):
     inc_n = op.nodes_incompatible_with_dict(node, d)
-    logger.debug('incompatible nodes are %s' % inc_n)
+    logger.debug('given node %s incompatible nodes are %s' % (node, inc_n))
     if inc_n:
         d = remove_incompatible_nodes(d, inc_n)
     logger.debug('after removal we have %s' % d)
@@ -117,9 +118,14 @@ def execute_algo(b, node_count):
     logger.info('Bin of edges:%s' % b)
     logger.info('We got %s nodes. Entire list is: %s' % (len(lst), lst))
     for i in lst:
-        # TODO spawn #len(lst) processes and execute them in parallel
+        temp_ = copy.deepcopy(b)
         logger.info('Next iteration. Working with node %s, which is #%s out of %s' % (i, lst.index(i)+1, len(lst)))
-        recursive_teardown(i, b, node_count)
+        recursive_teardown(i, temp_, node_count)
+
+    # TODO spawn #len(lst) processes and execute them in parallel
+    # p = Pool(5)
+    # temp_ = copy.deepcopy(b)
+    # p.map(recursive_teardown(i, temp_, node_count), lst)
 
     logger.info('results are:\n%s' % RESULT)
     logger.info('number of results: %s' % len(RESULT))
@@ -143,8 +149,7 @@ def set_up_preset():
 
 def main():
     start = time.time();
-    bin, n_count = set_up_random(6)
+    bin, n_count = set_up_random(8)
     execute_algo(bin, n_count)
     logger.info('Execution time: %s' % str(time.time() - start))
 
-main()
