@@ -184,7 +184,10 @@ def is_connected(d):
     pass
 
 
-
+def number_of_nodes_in(d):
+    """if #nodes in source dict != #nodes in results dict, we can disregard it"""
+    l = [split_composite_node(i) for i in flatten_dict_to_list(d)]
+    return len(list(itertools.chain.from_iterable(l)))
 
 # def _plain_bfs(G, source):
 #     """A fast BFS node generator"""
