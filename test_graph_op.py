@@ -169,3 +169,37 @@ class TestInc_nodes(TestCase):
         d = {'12F8T': ['123T'], '1F': ['123T'], '5F': ['123F5T', '16T'], '88F13F': ['123T7T', '5F']}
         correct_answer = []
         self.assertEqual(op.nodes_incompatible_with_dict(n, d), correct_answer)
+
+
+class Testis_connected(TestCase):
+    def test_is_connected_false(self):
+        d = {'1':['2', '3'], '4':['6','7'], '3':[], '2':[], '6':[], '7':[]} # two disconnected components
+        self.assertFalse(op.is_connected(d))
+
+    def test_is_connected_false_1(self):
+        d = {'1': [], '3': []} # two disconnected components
+        self.assertFalse(op.is_connected(d))
+
+    def test_is_connected_true(self):
+        d = {'1': ['2', '3'], '3': ['6', '7'], '2':[], '6':[], '7':[]}
+        self.assertTrue(op.is_connected(d))
+
+    def test_is_connected_false_1(self):
+        d = {'2T': [], '1F': ['2T'], '3F': []} # not connected
+        self.assertFalse(op.is_connected(d))
+
+    def test_is_connected_true_1(self):
+        d = {'2T': ['3T'], '1F': ['2T'], '3T': []}
+        self.assertTrue(op.is_connected(d))
+
+
+class Testconvert_directed_to_undirected(TestCase):
+    def test_convert_directed_to_undirected(self):
+        d = {'1': ['2', '3'], '3': ['6', '7'], '2': [], '6': [], '7': []}
+        correct_answer = {'1': ['2', '3'], '3': ['6', '7', '1'], '2': ['1'], '7': ['3'], '6': ['3']}
+        self.assertEqual(op.convert_directed_to_undirected(d), correct_answer)
+
+    def test_convert_directed_to_undirected_1(self):
+        d = {'1': ['2', '3'], '2': [], '3': []}
+        correct_answer = {'1': ['2', '3'], '2': ['1'], '3': ['1']}
+        self.assertEqual(op.convert_directed_to_undirected(d), correct_answer)

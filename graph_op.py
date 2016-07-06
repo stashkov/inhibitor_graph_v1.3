@@ -2,7 +2,6 @@ import re
 import itertools
 import copy
 
-
 def out_degree(adj_matrix):
     vertices = range(1, len(adj_matrix) + 1)
     vertices = [str(i) for i in vertices]
@@ -114,12 +113,6 @@ def split_composite_node(s):
     return re.findall(r'\d+[TF]', s)
 
 
-def is_compatible(d):
-    # '123F12T': ['1T', '12T'] is incompatible, because '12T' in '123F12T'
-    # '123F12T': ['1T', '12F'] is incompatible, because '12F' is a negation of '123F12T'
-    pass
-
-
 def is_simple_node(node):
     if node.count('F') + node.count('T') == 1:
         return True
@@ -185,20 +178,18 @@ def is_compatible_dict(d):
 
 
 def is_connected(d):
-    """check whether graph is connected"""
-    # TODO test cases
-    seen = set()
-    nodes = flatten_dict_to_list(d)
-    for n in nodes:
-        seen.add(_plain_bfs(d, n))
-    if len(seen) == len(nodes):
-        return True
-    else:
-        return False
+    return set(flatten_dict_to_list(d)) == set(_plain_bfs(convert_directed_to_undirected(d), d.keys()[0]))
+
+
+def convert_directed_to_undirected(d):
+    undirected_d = copy.deepcopy(d)
+    for key, value in d.items():
+        for i in value:
+            undirected_d[i].append(key)
+    return undirected_d
 
 
 def number_of_nodes_in(d):
-    """if #nodes in source dict != #nodes in results dict, we can disregard it"""
     l = [split_composite_node(i) for i in flatten_dict_to_list(d)]
     return len(list(itertools.chain.from_iterable(l)))
 
@@ -217,20 +208,3 @@ def _plain_bfs(G, source):
                 nextlevel.update(G[v])
 
 
-def recursive_teardown(node, d):
-    node_count = number_of_nodes_in(d)  # given a node, remove incompatible nodes from dict
-    inc_n = nodes_incompatible_with_dict(node, d)
-    # TODO del inc_n from d
-    print d
-    print inc_n
-    if node_count != number_of_nodes_in(d):
-        return  # check if dict has the same number of nodes (even if they are now composite nodes)
-    if not is_connected(d):
-        return  # if graph is disconnected, we don't want it
-    nodes_inside = nodes_incompatible_with_dict_itself(d)
-    if nodes_inside:  # check if d is compatible with itself
-        for i in nodes_inside:
-            temp_dict = copy.deepcopy(d)
-            recursive_teardown(i, temp_dict)
-    else:
-        return d  # we got an answer!
