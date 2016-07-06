@@ -121,16 +121,10 @@ class TestConvert_adj_matrix_to_dict(TestCase):
 
 
 class TestGenerate_adj_matrix(TestCase):
-    def test_Generate_adj_matrix(self):
-        """check that generated matrix has inhibition degree of every node bounded by b"""
-        import random
-        a = random.choice(range(1, 10))
-        b = random.choice(range(a))
-        m = op.generate_adj_matrix(vertices=a, inhibition_degree=b)
-        inh_edges, inh_degree = op.inhibited_edges(m)
-        #print a, b
-        #print inh_degree
-        self.assertTrue(all([0 < i <= b for i in inh_degree.values()]) or inh_degree == {})
+    def test_generate_adj_matrix_1(self):
+        n = 10
+        matrix = [list(i) for i in zip(*op.generate_adj_matrix(n))]
+        self.assertTrue(all([row.count(-1) <= 2 for row in matrix]))
 
 
 class TestInc_nodes(TestCase):

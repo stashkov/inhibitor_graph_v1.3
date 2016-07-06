@@ -46,14 +46,19 @@ def inhibited_edges(adj_matrix):
 
 
 def generate_adj_matrix(vertices, inhibition_degree=2):
-    """generate square matrix with max inihigibiton degree"""
+    """generate square matrix with max inihigibiton degree
+    currently several restrictions are in place, they need to be lifted later"""
     import random as rnd
     matrix = [[0 for x in range(vertices)] for y in range(vertices)]
     for i, row in enumerate(matrix):
         for j, element in enumerate(row):
             if i > j:
-                if row.count(-1) == inhibition_degree:
-                    matrix[i][j] = rnd.choice([0, 1])
+                if row.count(-1) + row.count(1) >= 2 and row.count(-1) != 0:
+                    matrix[i][j] = 0
+                elif row.count(-1) == 1:
+                    matrix[i][j] = rnd.choice([-1, 1, 0])
+                elif row.count(-1) == 2:
+                    matrix[i][j] = 0
                 else:
                     matrix[i][j] = rnd.choice([-1, 1, 0])
     matrix = [list(i) for i in zip(*matrix)]
@@ -181,6 +186,7 @@ def is_compatible_dict(d):
 
 def is_connected(d):
     """check whether graph is connected"""
+    # TODO test cases
     seen = set()
     nodes = flatten_dict_to_list(d)
     for n in nodes:
@@ -218,9 +224,9 @@ def recursive_teardown(node, d):
     print d
     print inc_n
     if node_count != number_of_nodes_in(d):
-        exit  # check if dict has the same number of nodes (even if they are now composite nodes)
+        return  # check if dict has the same number of nodes (even if they are now composite nodes)
     if not is_connected(d):
-        exit  # if graph is disconnected, we don't want it
+        return  # if graph is disconnected, we don't want it
     nodes_inside = nodes_incompatible_with_dict_itself(d)
     if nodes_inside:  # check if d is compatible with itself
         for i in nodes_inside:
@@ -228,14 +234,3 @@ def recursive_teardown(node, d):
             recursive_teardown(i, temp_dict)
     else:
         return d  # we got an answer!
-
-
-def generate_connected_graph(number_of_nodes):
-    flag = False
-    while not flag:
-        m = generate_adj_matrix(number_of_nodes)
-        graph = to_dict(m)
-        flag = is_connected(graph)
-    return graph
-
-
