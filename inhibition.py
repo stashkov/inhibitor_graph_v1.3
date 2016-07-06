@@ -3,6 +3,12 @@ import rule as r
 from collections import defaultdict
 import copy
 import itertools
+import logging
+import time
+
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 RESULT = []
 
@@ -24,12 +30,12 @@ def generate_bin_of_edges(g, m):
     inhibited_vertices = set([edge[1] for edge in inhibited_edges])
     non_inhibited_vertices = list(set(g.keys()) - inhibited_vertices)
 
-    print 'input graph --------------->', g
-    print 'in degree for each node --->', in_degree
-    print 'out degree for each node -->', out_degree
-    print 'inhibited edges ----------->', inhibited_edges
-    print 'number of inhibited edges going into a node -->', inhibition_degree
-    print 'non inhibited vertices ---->', non_inhibited_vertices
+    logger.info('input graph --------------->%s' % g)
+    logger.debug('in degree for each node --->%s' % in_degree)
+    logger.debug('out degree for each node -->%s' % out_degree)
+    logger.debug('inhibited edges ----------->%s' % inhibited_edges)
+    logger.debug('number of inhibited edges going into a node -->%s' % inhibition_degree)
+    logger.debug('non inhibited vertices ---->%s' % non_inhibited_vertices)
 
     bin_of_edges = defaultdict(set)
 
@@ -54,6 +60,7 @@ def generate_bin_of_edges(g, m):
         if in_degree[v] == 1:  # CASE V
             bin_of_edges = r.exactly_one_no_inhibited(g, v, bin_of_edges)
 
+    # TODO move this part out to is_connected, because it slows down performance dramatically and not needed here
     #{'1':['2']} is not good enough, make it {'1':['2'], '2':[]}
     for i in list(itertools.chain.from_iterable(bin_of_edges.values())):
         if i not in bin_of_edges.keys():
@@ -67,31 +74,31 @@ def generate_bin_of_edges(g, m):
 
 def recursive_teardown(node, d, node_count):
     inc_n = op.nodes_incompatible_with_dict(node, d)
-    print 'incompatible nodes are', inc_n
+    logger.debug('incompatible nodes are %s' % inc_n)
     if inc_n:
         d = remove_incompatible_nodes(d, inc_n)
-    print 'after removal we have', d
+    logger.debug('after removal we have %s' % d)
     if node_count > op.number_of_nodes_in(d):
-        print 'this dict is incompatible because original node count %i > current node count %i' % (node_count, op.number_of_nodes_in(d))
+        logger.debug('this dict is incompatible because original node count %i > current node count %i' % (node_count, op.number_of_nodes_in(d)))
         return  # check if dict has the same number of nodes (even if they are now composite nodes)
     nodes_inside = op.nodes_incompatible_with_dict_itself(d)
-    print 'inc nodes_inside', nodes_inside
+    logger.debug('inc nodes_inside %s' % nodes_inside)
     if nodes_inside:  # check if d is compatible with itself
         for i in nodes_inside:
-            print 'inside recursive, working with node', i
+            logger.debug('inside recursive, working with node %s' % i)
             temp_dict = copy.deepcopy(d)
             recursive_teardown(i, temp_dict, node_count)
     else:
         if op.is_connected(d):
-            print '\nHOORAY! WE GOT AN ANSWER'
-            print d
+            logger.debug('HOORAY! WE GOT AN ANSWER')
+            logger.debug(d)
             global RESULT
             if d not in RESULT:
                 RESULT.append(d)
-            print '--------------------'
+            logger.debug('--------------------')
             return d  # we got an answer!
         else:
-            print 'this dict is incompatible because it is not connected'
+            logger.debug('this dict is incompatible because it is not connected')
             return  # if graph is disconnected, we don't want it
 
 
@@ -105,19 +112,39 @@ def remove_incompatible_nodes(d, incompatible_nodes):
     return d
 
 
-#NUMBER_OF_NODES = 5
-# g, m = generate_graph(5)
-import example_graphs as ex
-m = ex.graph_I
-g = op.to_dict(m)
-node_count = 3
-b = generate_bin_of_edges(g, m)
+def execute_algo(b, node_count):
+    lst = op.flatten_dict_to_list(b)
+    logger.info('Bin of edges:%s' % b)
+    logger.info('We got %s nodes. Entire list is: %s' % (len(lst), lst))
+    for i in lst:
+        # TODO spawn #len(lst) processes and execute them in parallel
+        logger.info('Next iteration. Working with node %s, which is #%s out of %s' % (i, lst.index(i)+1, len(lst)))
+        recursive_teardown(i, b, node_count)
 
-print 'bin', b
-for i in op.flatten_dict_to_list(b):
-    print '\nnext iteration\n'
-    print 'working with node', i
-    a = recursive_teardown(i, b, node_count)
+    logger.info('results are:\n%s' % RESULT)
+    logger.info('number of results: %s' % len(RESULT))
 
-print '\nresults are:'
-print RESULT
+
+def set_up_random(num_of_nodes):
+    g, m = generate_graph(num_of_nodes)
+    node_count = num_of_nodes
+    b = generate_bin_of_edges(g, m)
+    return b, node_count
+
+
+def set_up_preset():
+    import example_graphs as ex
+    m = ex.graph_II
+    g = op.to_dict(m)
+    node_count = 3
+    b = generate_bin_of_edges(g, m)
+    return b, node_count
+
+
+def main():
+    start = time.time();
+    bin, n_count = set_up_random(6)
+    execute_algo(bin, n_count)
+    logger.info('Execution time: %s' % str(time.time() - start))
+
+main()
