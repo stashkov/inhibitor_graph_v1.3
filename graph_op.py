@@ -150,11 +150,11 @@ def nodes_incompatible_with_dict(node, d):
             if is_simple_node(i) and is_simple_node(e):
                 if i == e:
                     res.add(e)
-            if is_simple_node(i) and not is_simple_node(e):
+            elif is_simple_node(i) and not is_simple_node(e):
                 for e1 in split_composite_node(e):
                     if i[:-1] == e1[:-1] and node != e:
                         res.add(e)
-            if not is_simple_node(i) and is_simple_node(e):
+            elif not is_simple_node(i) and is_simple_node(e):
                 for i1 in split_composite_node(i):
                     if i1[:-1] == e[:-1]:
                         res.add(e)
@@ -181,7 +181,14 @@ def is_compatible_dict(d):
 
 def is_connected(d):
     """check whether graph is connected"""
-    pass
+    seen = set()
+    nodes = flatten_dict_to_list(d)
+    for n in nodes:
+        seen.add(_plain_bfs(d, n))
+    if len(seen) == len(nodes):
+        return True
+    else:
+        return False
 
 
 def number_of_nodes_in(d):
@@ -189,15 +196,46 @@ def number_of_nodes_in(d):
     l = [split_composite_node(i) for i in flatten_dict_to_list(d)]
     return len(list(itertools.chain.from_iterable(l)))
 
-# def _plain_bfs(G, source):
-#     """A fast BFS node generator"""
-#     seen = set()
-#     nextlevel = {source}
-#     while nextlevel:
-#         thislevel = nextlevel
-#         nextlevel = set()
-#         for v in thislevel:
-#             if v not in seen:
-#                 yield v
-#                 seen.add(v)
-#                 nextlevel.update(G[v])
+
+def _plain_bfs(G, source):
+    """A fast BFS node generator"""
+    seen = set()
+    nextlevel = {source}
+    while nextlevel:
+        thislevel = nextlevel
+        nextlevel = set()
+        for v in thislevel:
+            if v not in seen:
+                yield v
+                seen.add(v)
+                nextlevel.update(G[v])
+
+
+def recursive_teardown(node, d):
+    node_count = number_of_nodes_in(d)  # given a node, remove incompatible nodes from dict
+    inc_n = nodes_incompatible_with_dict(node, d)
+    # TODO del inc_n from d
+    print d
+    print inc_n
+    if node_count != number_of_nodes_in(d):
+        exit  # check if dict has the same number of nodes (even if they are now composite nodes)
+    if not is_connected(d):
+        exit  # if graph is disconnected, we don't want it
+    nodes_inside = nodes_incompatible_with_dict_itself(d)
+    if nodes_inside:  # check if d is compatible with itself
+        for i in nodes_inside:
+            temp_dict = copy.deepcopy(d)
+            recursive_teardown(i, temp_dict)
+    else:
+        return d  # we got an answer!
+
+
+def generate_connected_graph(number_of_nodes):
+    flag = False
+    while not flag:
+        m = generate_adj_matrix(number_of_nodes)
+        graph = to_dict(m)
+        flag = is_connected(graph)
+    return graph
+
+
