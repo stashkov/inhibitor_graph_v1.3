@@ -61,20 +61,15 @@ def generate_bin_of_edges(g, m):
         if in_degree[v] == 1:  # CASE V
             bin_of_edges = r.exactly_one_no_inhibited(g, v, bin_of_edges)
 
-    # TODO move this part out to is_connected, because it slows down performance dramatically and not needed here
-    #{'1':['2']} is not good enough, make it {'1':['2'], '2':[]}
-    for i in list(itertools.chain.from_iterable(bin_of_edges.values())):
-        if i not in bin_of_edges.keys():
-            bin_of_edges[i] = set()
-
     # make a normal dict instead of default dict
     bin_of_edges = defaultdict(list, ((k, list(v)) for k, v in bin_of_edges.items()))
     bin_of_edges = dict(bin_of_edges)
     return bin_of_edges
 
 
-def recursive_teardown(node, d, node_count):
+def recursive_teardown(node, d, node_count, recursion_level=0):
     inc_n = op.nodes_incompatible_with_dict(node, d)
+    logger.debug('Leonardo is currently %s levels deep' % recursion_level)
     logger.debug('given node %s incompatible nodes are %s' % (node, inc_n))
     if inc_n:
         d = remove_incompatible_nodes(d, inc_n)
@@ -88,7 +83,7 @@ def recursive_teardown(node, d, node_count):
         for i in nodes_inside:
             logger.debug('inside recursive, working with node %s' % i)
             temp_dict = copy.deepcopy(d)
-            recursive_teardown(i, temp_dict, node_count)
+            recursive_teardown(i, temp_dict, node_count, recursion_level=recursion_level+1)
     else:
         if op.is_connected(d):
             logger.debug('HOORAY! WE GOT AN ANSWER')
@@ -149,7 +144,9 @@ def set_up_preset():
 
 def main():
     start = time.time();
-    bin, n_count = set_up_random(8)
+    bin, n_count = set_up_random(5  )
     execute_algo(bin, n_count)
     logger.info('Execution time: %s' % str(time.time() - start))
 
+
+main()

@@ -178,7 +178,11 @@ def is_compatible_dict(d):
 
 
 def is_connected(d):
-    return set(flatten_dict_to_list(d)) == set(_plain_bfs(convert_directed_to_undirected(d), d.keys()[0]))
+    temp_d = copy.deepcopy(d)
+    for i in list(itertools.chain.from_iterable(temp_d.values())):
+        if i not in temp_d.keys():
+            temp_d[i] = []
+    return set(flatten_dict_to_list(temp_d)) == set(_plain_bfs(convert_directed_to_undirected(temp_d), temp_d.keys()[0]))
 
 
 def convert_directed_to_undirected(d):
