@@ -39,7 +39,7 @@ def more_than_one_one_inhibited(graph_dict, u, v, bin_of_edges):
 
 def more_than_one_no_inhibited(graph_dict, v, bin_of_edges):
     new_node = ''  # CASE VI.1
-    for key, value in graph_dict.items():
+    for key, value in graph_dict.iteritems():
         if v in value:  # find nodes, other than u, going to v
             new_node += key + 'T'  # CASE VI.1
             bin_of_edges[key + 'T'].add(v + 'T')  # CASE VI.2
@@ -50,7 +50,7 @@ def more_than_one_no_inhibited(graph_dict, v, bin_of_edges):
 
 def exactly_one_no_inhibited(graph_dict, v, bin_of_edges):
     # CASE V
-    for key, value in graph_dict.items():
+    for key, value in graph_dict.iteritems():
         if v in value:  # find nodes, other than u, going to v
             bin_of_edges[key + 'T'].add(v + 'T')
             bin_of_edges[key + 'F'].add(v + 'F')

@@ -144,15 +144,17 @@ def nodes_incompatible_with_dict(node, d):
     inc_nodes_list = incompatible_nodes(node)  # generate incompatible nodes
     existing_nodes_list = flatten_dict_to_list(d)
     for i in inc_nodes_list:
+        i_flag = is_simple_node(i)
         for e in existing_nodes_list:
-            if is_simple_node(i) and is_simple_node(e):
+            e_flag = is_simple_node(e)
+            if i_flag and e_flag:
                 if i == e:
                     res.add(e)
-            elif is_simple_node(i) and not is_simple_node(e):
+            elif i_flag and not e_flag:
                 for e1 in split_composite_node(e):
                     if i[:-1] == e1[:-1] and node != e:
                         res.add(e)
-            elif not is_simple_node(i) and is_simple_node(e):
+            elif not i_flag and e_flag:
                 for i1 in split_composite_node(i):
                     if i1[:-1] == e[:-1]:
                         res.add(e)
@@ -187,7 +189,7 @@ def is_connected(d):
 
 def convert_directed_to_undirected(d):
     undirected_d = copy.deepcopy(d)
-    for key, value in d.items():
+    for key, value in d.iteritems():
         for i in value:
             undirected_d[i].append(key)
     return undirected_d
