@@ -5,13 +5,22 @@ import copy
 import itertools
 import logging
 import time
-from multiprocessing import Pool
+from multiprocessing import Process, Manager
 
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
+# create a file handler
+#handler = logging.FileHandler('hello.log')
+#handler.setLevel(logging.INFO)
 
-RESULT = []
+# create a logging format
+#formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+#handler.setFormatter(formatter)
+
+# add the handlers to the logger
+#logger.addHandler(handler)
+
 
 def generate_graph(n_of_nodes):
     flag = False
@@ -34,7 +43,7 @@ def generate_bin_of_edges(g, m):
     logger.info('input graph --------------->%s' % g)
     logger.debug('in degree for each node --->%s' % in_degree)
     logger.debug('out degree for each node -->%s' % out_degree)
-    logger.debug('inhibited edges ----------->%s' % inhibited_edges)
+    logger.info('inhibited edges ----------->%s' % inhibited_edges)
     logger.debug('number of inhibited edges going into a node -->%s' % inhibition_degree)
     logger.debug('non inhibited vertices ---->%s' % non_inhibited_vertices)
 
@@ -67,7 +76,7 @@ def generate_bin_of_edges(g, m):
     return bin_of_edges
 
 
-def recursive_teardown(node, d, node_count, recursion_level=0):
+def recursive_teardown(node, d, node_count, result, recursion_level=0):
     inc_n = op.nodes_incompatible_with_dict(node, d)
     logger.debug('Leonardo is currently %s levels deep' % recursion_level)
     logger.debug('given node %s incompatible nodes are %s' % (node, inc_n))
@@ -83,19 +92,18 @@ def recursive_teardown(node, d, node_count, recursion_level=0):
         for i in nodes_inside:
             logger.debug('inside recursive, working with node %s' % i)
             temp_dict = copy.deepcopy(d)
-            recursive_teardown(i, temp_dict, node_count, recursion_level=recursion_level+1)
+            recursive_teardown(i, temp_dict, node_count, result, recursion_level=recursion_level+1)
     else:
         if op.is_connected(d):
-            logger.debug('HOORAY! WE GOT AN ANSWER')
-            logger.debug(d)
-            global RESULT
-            if d not in RESULT:
-                RESULT.append(d)
+            logger.debug('HOORAY! WE GOT AN ANSWER \n %s' % d)
+            if d not in result:
+                result.append(d)
             logger.debug('--------------------')
             return d  # we got an answer!
         else:
             logger.debug('this dict is incompatible because it is not connected')
             return  # if graph is disconnected, we don't want it
+    logger.debug('quitting the stack for node %s' % node)
 
 
 def remove_incompatible_nodes(d, incompatible_nodes):
@@ -109,21 +117,32 @@ def remove_incompatible_nodes(d, incompatible_nodes):
 
 
 def execute_algo(b, node_count):
+    manager = Manager()
+    result = manager.list()
+
     lst = op.flatten_dict_to_list(b)
     logger.info('Bin of edges:%s' % b)
     logger.info('We got %s nodes. Entire list is: %s' % (len(lst), lst))
+    # st = time.time()
+    # for i in lst:
+    #     temp_ = copy.deepcopy(b)
+    #     logger.info('Next iteration. Working with node %s, which is #%s out of %s' % (i, lst.index(i)+1, len(lst)))
+    #     recursive_teardown(i, temp_, node_count, result)
+    # print 'Execution time sequential: %s' % str(time.time() - st)
+
+    jobs = []
     for i in lst:
         temp_ = copy.deepcopy(b)
         logger.info('Next iteration. Working with node %s, which is #%s out of %s' % (i, lst.index(i)+1, len(lst)))
-        recursive_teardown(i, temp_, node_count)
+        p = Process(target=recursive_teardown, args=(i, temp_, node_count, result))
+        jobs.append(p)
+        p.start()
+    while any([j.is_alive() for j in jobs]):
+        time.sleep(5)
+    p.join()
 
-    # TODO spawn #len(lst) processes and execute them in parallel
-    # p = Pool(5)
-    # temp_ = copy.deepcopy(b)
-    # p.map(recursive_teardown(i, temp_, node_count), lst)
-
-    logger.info('results are:\n%s' % RESULT)
-    logger.info('number of results: %s' % len(RESULT))
+    logger.info('results are:\n%s' % result)
+    logger.info('number of results: %s' % len(result))
 
 
 def set_up_random(num_of_nodes):
@@ -136,17 +155,18 @@ def set_up_random(num_of_nodes):
 def set_up_preset():
     import example_graphs as ex
     m = ex.graph_II
-    g = op.to_dict(m)
     node_count = 3
+    g = op.to_dict(m)
     b = generate_bin_of_edges(g, m)
     return b, node_count
 
 
-def main():
+if __name__ == '__main__':
     start = time.time();
-    bin, n_count = set_up_random(5  )
+    bin, n_count = set_up_random(6)
+    #bin, n_count = set_up_preset()
     execute_algo(bin, n_count)
     logger.info('Execution time: %s' % str(time.time() - start))
 
 
-main()
+#main()
