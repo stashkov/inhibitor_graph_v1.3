@@ -5,8 +5,9 @@ import copy
 import itertools
 import logging
 import time
-from multiprocessing import Process, Manager
+from multiprocessing import Process, Manager, cpu_count, current_process
 
+NUMBER_OF_ALLOWED_PROCESSES = cpu_count() - 1
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -87,9 +88,11 @@ def helper_deadend_nodes(bin_of_edges):
 
 
 def recursive_teardown(node, d, node_count, result, recursion_level=0):
-    #logger.info('if you see this it means I am not blocked by sleep')
+    # logger.info('if you see this it means I am not blocked by sleep')
+    logger.debug('I am the process: %s' % current_process().name)
     inc_n = op.nodes_incompatible_with_dict(node, d)
     logger.debug('Leonardo is currently %s levels deep' % recursion_level)
+    logger.debug('we got dict %s' % d)
     logger.debug('given node %s incompatible nodes are %s' % (node, inc_n))
     if inc_n:
         d = remove_incompatible_nodes(d, inc_n)
@@ -118,12 +121,21 @@ def recursive_teardown(node, d, node_count, result, recursion_level=0):
 
 
 def remove_incompatible_nodes(d, incompatible_nodes):
+    mark_for_deletion = []
     for i in incompatible_nodes:
         if i in d.keys():
             del d[i]
         for k, v in d.iteritems():
             if i in v:
                 d[k].remove(i)
+                # if we have a node {n:[]} that means
+                # it has out_degree=0 which means it must have in_degree at least 1
+                # otherwise it is an isolated node and can be removed
+                if d[k] == [] and k not in itertools.chain.from_iterable(d.values()):
+                    mark_for_deletion.append(k)
+    for i in mark_for_deletion:
+        if i in d.keys():
+            del d[i]
     return d
 
 
@@ -135,25 +147,28 @@ def execute_algo(b, node_count):
     logger.info('Bin of edges:%s' % b)
     logger.info('We got %s nodes. Entire list is: %s' % (len(lst), lst))
 
-    # # sequential execution
-    for i in lst:
-        temp_ = copy.deepcopy(b)
-        logger.info('Next iteration. Working with node %s, which is #%s out of %s' % (i, lst.index(i)+1, len(lst)))
-        recursive_teardown(i, temp_, node_count, result)
-
-    # jobs = []
+    # sequential execution
     # for i in lst:
     #     temp_ = copy.deepcopy(b)
     #     logger.info('Next iteration. Working with node %s, which is #%s out of %s' % (i, lst.index(i)+1, len(lst)))
-    #     p = Process(target=recursive_teardown, args=(i, temp_, node_count, result))
-    #     p.daemon = True  # make it a daemon so that sleep() in main does not affect other threads
-    #     jobs.append(p)
-    #     p.start()
-    # while any([j.is_alive() for j in jobs]):
-    #     logger.debug([j for j in jobs if j.is_alive() == True])
-    #     logger.info('Processes completed %s out of %s' % (len([j for j in jobs if j.is_alive() == False]), len(lst)))
-    #     time.sleep(5)
-    # p.join()
+    #     recursive_teardown(i, temp_, node_count, result)
+
+    jobs = []
+    for i in lst:
+        temp_ = copy.deepcopy(b)
+        logger.info('Next iteration. Working with node %s, which is #%s out of %s' % (i, lst.index(i)+1, len(lst)))
+        p = Process(target=recursive_teardown, args=(i, temp_, node_count, result))
+        p.daemon = True  # make it a daemon so that sleep() in main does not affect other threads
+        jobs.append(p)
+        p.start()
+
+        while len([1 for j in jobs if j.is_alive() == True]) >= NUMBER_OF_ALLOWED_PROCESSES:
+            time.sleep(5)
+    while any([j.is_alive() for j in jobs]):
+        logger.debug([j for j in jobs if j.is_alive() == True])
+        logger.info('Processes completed %s out of %s' % (len([j for j in jobs if j.is_alive() == False]), len(lst)))
+        time.sleep(5)
+    p.join()
 
     #logger.info('Processes completed %s out of %s' % (len([j for j in jobs if j.is_alive() == False]), len(lst)))
     logger.info('results are:\n%s' % result)
@@ -187,9 +202,9 @@ def set_up_with_dict():
 
 if __name__ == '__main__':
     start = time.time();
-    #bin, n_count = set_up_random(6)
+    bin, n_count = set_up_random(10)
     #bin, n_count = set_up_preset()
-    bin, n_count = set_up_with_dict()
+    #bin, n_count = set_up_with_dict()
     execute_algo(bin, n_count)
     logger.info('Execution time: %s' % str(time.time() - start))
 

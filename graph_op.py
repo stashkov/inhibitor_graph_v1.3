@@ -146,7 +146,7 @@ def nodes_incompatible_with_dict(node, d):
     """
 
     res = set()
-    inc_nodes_list = incompatible_nodes(node)  # generate incompatible nodes
+    inc_nodes_list = list(set(incompatible_nodes(node) + swap_true_and_false(d[node])))  # generate incompatible nodes
     existing_nodes_list = flatten_dict_to_list(d)
     for i in inc_nodes_list:
         i_flag = is_simple_node(i)
@@ -180,13 +180,8 @@ def nodes_incompatible_with_dict_itself(d):
     return list(res)
 
 
-def is_compatible_dict(d):
-    return not bool(nodes_incompatible_with_dict_itself(d))
-
-
 def is_connected(d):
-    temp_d = copy.deepcopy(d)
-    return set(flatten_dict_to_list(temp_d)) == set(_plain_bfs(convert_directed_to_undirected(temp_d), temp_d.keys()[0]))
+    return set(d.keys()) == set(_plain_bfs(convert_directed_to_undirected(d), d.keys()[0]))
 
 
 def convert_directed_to_undirected(d):
