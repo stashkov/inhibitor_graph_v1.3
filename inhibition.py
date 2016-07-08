@@ -70,9 +70,19 @@ def generate_bin_of_edges(g, m):
         if in_degree[v] == 1:  # CASE V
             bin_of_edges = r.exactly_one_no_inhibited(g, v, bin_of_edges)
 
+    bin_of_edges = helper_deadend_nodes(bin_of_edges)
+
     # make a normal dict instead of default dict
     bin_of_edges = defaultdict(list, ((k, list(v)) for k, v in bin_of_edges.iteritems()))
     bin_of_edges = dict(bin_of_edges)
+    return bin_of_edges
+
+
+def helper_deadend_nodes(bin_of_edges):
+    """given {1:[2]} make it {1:[2], 2:[]}"""
+    for i in set(itertools.chain.from_iterable(bin_of_edges.values())):
+        if i not in bin_of_edges.keys():
+            bin_of_edges[i] = []
     return bin_of_edges
 
 
@@ -167,16 +177,17 @@ def set_up_preset():
 
 
 def set_up_with_dict():
-    g = {'1': ['3', '5', '7'], '3': ['4', '6', '7'], '2': ['3', '4', '6'], '5': [], '4': ['5'], '7': [], '6': []}  #INFO:__main__:Execution time: 169, 166
+    # TODO preserve inhibited edges
+    g = {'1': ['4', '5'], '3': ['6'], '2': ['3', '4', '6'], '5': ['6'], '4': ['5', '6'], '6': []}
     m = op.to_adj_matrix(g)
-    node_count = 7
+    node_count = 6
     b = generate_bin_of_edges(g, m)
     return b, node_count
 
 
 if __name__ == '__main__':
     start = time.time();
-    #bin, n_count = set_up_random(7)
+    #bin, n_count = set_up_random(6)
     #bin, n_count = set_up_preset()
     bin, n_count = set_up_with_dict()
     execute_algo(bin, n_count)

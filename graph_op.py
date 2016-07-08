@@ -91,14 +91,15 @@ def to_adj_matrix(d):
 def flatten_dict_to_list(d):
     """return sorted list of unique nodes"""
     # TODO write test this
-    if not all([isinstance(i, list) for i in d.values()]):
-        print 'Encountered an error.'
-        print 'inside dict:', d
-        print 'values %s are not instances of a list' % str(d.values())
-        raise ValueError
-    all_nodes_values = set(itertools.chain.from_iterable(d.values()))
-    all_nodes_keys = set(d.keys())
-    return sorted(list(all_nodes_values | all_nodes_keys))
+    # if not all([isinstance(i, list) for i in d.values()]):
+    #     print 'Encountered an error.'
+    #     print 'inside dict:', d
+    #     print 'values %s are not instances of a list' % str(d.values())
+    #     raise ValueError
+    #all_nodes_values = set(itertools.chain.from_iterable(d.values()))
+    #all_nodes_keys = set(d.keys())
+    #return sorted(list(all_nodes_values | all_nodes_keys))
+    return d.keys()
 
 
 def swap_true_and_false(nodes):
@@ -114,10 +115,13 @@ def split_composite_node(s):
 
 
 def is_simple_node(node):
-    if node.count('F') + node.count('T') == 1:
-        return True
-    else:
-        return False
+    counter = 0
+    for i in node:
+        if i in 'TF':
+            counter += 1
+            if counter > 1:
+                return False
+    return True
 
 
 def incompatible_nodes(node):
@@ -128,6 +132,7 @@ def incompatible_nodes(node):
         node_list = [swap_true_and_false(node)]
         node_list.extend(split_composite_node(node))
         node_list.extend(split_composite_node(swap_true_and_false(node)))
+        # TODO have to bring in node:[values] to generate even more inc nodes!
         return node_list
 
 
@@ -181,9 +186,6 @@ def is_compatible_dict(d):
 
 def is_connected(d):
     temp_d = copy.deepcopy(d)
-    for i in list(itertools.chain.from_iterable(temp_d.values())):
-        if i not in temp_d.keys():
-            temp_d[i] = []
     return set(flatten_dict_to_list(temp_d)) == set(_plain_bfs(convert_directed_to_undirected(temp_d), temp_d.keys()[0]))
 
 
