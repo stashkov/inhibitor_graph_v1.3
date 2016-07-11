@@ -194,7 +194,7 @@ def convert_directed_to_undirected(d):
 
 def number_of_nodes_in(d):
     l = [split_composite_node(i) for i in flatten_dict_to_list(d)]
-    return len(list(itertools.chain.from_iterable(l)))
+    return len({i[:-1] for i in itertools.chain.from_iterable(l)})
 
 
 def _plain_bfs(G, source):
