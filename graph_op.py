@@ -78,7 +78,7 @@ def to_dict(adj_matrix):
 
 def to_adj_matrix(d):
     """convert graph from dict to adj matrix"""
-    all_nodes = flatten_dict_to_list(d)
+    all_nodes = d.keys()
     m = []
     for v in all_nodes:
         if v in d.keys():
@@ -86,20 +86,6 @@ def to_adj_matrix(d):
         else:
             m.append([0] * len(all_nodes))
     return m
-
-
-def flatten_dict_to_list(d):
-    """return sorted list of unique nodes"""
-    # TODO write test this
-    # if not all([isinstance(i, list) for i in d.values()]):
-    #     print 'Encountered an error.'
-    #     print 'inside dict:', d
-    #     print 'values %s are not instances of a list' % str(d.values())
-    #     raise ValueError
-    #all_nodes_values = set(itertools.chain.from_iterable(d.values()))
-    #all_nodes_keys = set(d.keys())
-    #return sorted(list(all_nodes_values | all_nodes_keys))
-    return d.keys()
 
 
 def swap_true_and_false(nodes):
@@ -147,7 +133,7 @@ def nodes_incompatible_with_dict(node, d):
 
     res = set()
     inc_nodes_list = list(set(incompatible_nodes(node) + swap_true_and_false(d[node])))  # generate incompatible nodes
-    existing_nodes_list = flatten_dict_to_list(d)
+    existing_nodes_list = d.keys()
     for i in inc_nodes_list:
         i_flag = is_simple_node(i)
         for e in existing_nodes_list:
@@ -173,7 +159,7 @@ def nodes_incompatible_with_dict(node, d):
 
 def nodes_incompatible_with_dict_itself(d):
     """dict {'5T': '6F', '5F': '6T'} is incompatible with itself"""
-    lst = flatten_dict_to_list(d)
+    lst = d.keys()
     res = set()
     for n in lst:
         res.update(nodes_incompatible_with_dict(n, d))
@@ -193,7 +179,7 @@ def convert_directed_to_undirected(d):
 
 
 def number_of_nodes_in(d):
-    l = [split_composite_node(i) for i in flatten_dict_to_list(d)]
+    l = [split_composite_node(i) for i in d.keys()]
     return len({i[:-1] for i in itertools.chain.from_iterable(l)})
 
 
