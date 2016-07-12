@@ -9,8 +9,8 @@ from multiprocessing import Process, Manager, cpu_count, current_process
 
 NUMBER_OF_ALLOWED_PROCESSES = cpu_count() - 1
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG, filename='hello.log')
-#logging.basicConfig(level=logging.INFO)
+#logging.basicConfig(level=logging.DEBUG, filename='hello.log')
+logging.basicConfig(level=logging.INFO)
 
 
 # create a file handler
@@ -89,10 +89,17 @@ def helper_deadend_nodes(bin_of_edges):
     return bin_of_edges
 
 
+# def is_feasible(node_count, d):
+#     return node_count < op.number_of_nodes_in(d)  # 6 < 7, we have 6 in original, and 7 in d, we still have a chance
+
+
 def recursive_teardown(node, d, node_count, result, recursion_level=0):
     # logger.info('if you see this it means I am not blocked by sleep')
     #logger.debug('I am the process: %s' % current_process().name)
-    inc_n = op.nodes_incompatible_with_dict(node, d)
+    if node:
+        inc_n = op.nodes_incompatible_with_dict(node, d)
+    else:
+        inc_n = None
     #logger.debug('Leonardo is currently %s levels deep' % recursion_level)
     logger.debug('we got dict %s' % d)
     logger.debug('given node %s incompatible nodes are %s' % (node, inc_n))
@@ -104,11 +111,21 @@ def recursive_teardown(node, d, node_count, result, recursion_level=0):
         return  # check if dict has the same number of nodes (even if they are now composite nodes)
     nodes_inside = op.nodes_incompatible_with_dict_itself(d)
     logger.debug('inc nodes_inside %s' % nodes_inside)
-    if nodes_inside:  # check if d is compatible with itself
-        for i in nodes_inside:
-            logger.debug('inside recursive, working with node %s' % i)
-            temp_dict = copy.deepcopy(d)
-            recursive_teardown(i, temp_dict, node_count, result, recursion_level=recursion_level+1)
+    if nodes_inside:  # check if d is incompatible with itself
+        if len(nodes_inside) == 2:
+            global cnt
+            cnt += 1
+            temp_dict_1 = copy.deepcopy(d)
+            temp_dict_2 = copy.deepcopy(d)
+            temp_dict_1 = remove_incompatible_nodes(temp_dict_1, [nodes_inside[0]])
+            temp_dict_2 = remove_incompatible_nodes(temp_dict_2, [nodes_inside[1]])
+            recursive_teardown(None, temp_dict_1, node_count, result, recursion_level=recursion_level + 1)
+            recursive_teardown(None, temp_dict_2, node_count, result, recursion_level=recursion_level + 1)
+        else:
+            for i in nodes_inside:
+                logger.debug('inside recursive, working with node %s' % i)
+                temp_dict = copy.deepcopy(d)
+                recursive_teardown(i, temp_dict, node_count, result, recursion_level=recursion_level+1)
     else:
         if op.is_connected(d):
             logger.debug('HOORAY! WE GOT AN ANSWER \n %s' % d)
@@ -203,12 +220,14 @@ def set_up_with_dict():
 
 
 if __name__ == '__main__':
+    cnt = 0
     start = time.time();
     bin, n_count = set_up_random(10)
     #bin, n_count = set_up_preset()
     #bin, n_count = set_up_with_dict()
     execute_algo(bin, n_count)
     logger.info('Execution time: %s' % str(time.time() - start))
+    print cnt
 
 
 #main()
