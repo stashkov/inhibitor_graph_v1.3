@@ -27,7 +27,7 @@ class TestRemove_incompatible_nodes(TestCase):
         d = {'2T': ['3T'], '3T': [], '3F': [], '1F': ['2T']}
         # given a node 3F
         inc_nodes = ['3T']
-        correct_answer = {'2T': [], '1F': ['2T'], '3F': []}
+        correct_answer = {'2T': [], '1F': ['2T']}
         self.assertEqual(i.remove_incompatible_nodes(d, inc_nodes), correct_answer)
 
 
@@ -170,26 +170,32 @@ class TestInc_nodes(TestCase):
 class TestInc_nodes(TestCase):
     def test_nodes_incompatible_with_dict_simple_node_incompatible(self):
         n = '123F'
-        d = {'1F': ['123T'], '5F': ['123F5T', '16T'], '88T12F': ['123F7T', '5F']}
+        d = {'1F': ['123T'],
+             '5F': ['123F5T', '1F'],
+             '88T12F': ['123F7T', '5F'],
+             '123F': [],
+             '123T': [],
+             '123F7T': [],
+             '123F5T': []}
         correct_answer = ['123T', '123F7T', '123F5T']
         self.assertEqual(op.nodes_incompatible_with_dict(n, d), correct_answer)
 
     def test_nodes_incompatible_with_dict_simple_node_compatible(self):
         n = '123F'
-        d = {'1F': ['12T'], '5F': ['12F5T', '16T'], '88T12F': ['12T7T', '5F']}
+        d = {'1F': ['12T'], '5F': ['12F5T', '16T'], '88T12F': ['12T7T', '5F'], '123F': []}
         correct_answer = []
         self.assertEqual(op.nodes_incompatible_with_dict(n, d), correct_answer)
 
     def test_nodes_incompatible_with_dict_comp_node_incompatible(self):
         n = '12F8T'
-        d = {'1F': ['123T'], '5F': ['123F5T', '16T'], '88T12F': ['123T7T', '12F']}
+        d = {'1F': ['123T'], '5F': ['123F5T', '16T'], '88T12F': ['123T7T', '12F'], '12F8T':[], '12F':[]}
         correct_answer = ['12F', '88T12F']
         self.assertEqual(op.nodes_incompatible_with_dict(n, d), correct_answer)
 
     def test_nodes_incompatible_with_dict_comp_node_incompatible_1(self):
         n = '12F8T'
-        d = {'1F': ['123T'], '5F': ['123F5T', '16T'], '88F12F': ['123T7T', '5F']}
-        correct_answer = ['88F12F']
+        d = {'1F': ['123T'], '5F': ['123F5T', '16T'], '88T12F': ['123T7T', '12F'], '12F8T': []}
+        correct_answer = ['88T12F']
         self.assertEqual(op.nodes_incompatible_with_dict(n, d), correct_answer)
 
     def test_nodes_incompatible_with_dict_comp_node_compatible(self):
@@ -241,13 +247,16 @@ class TestExactly_one_one_inhibited(TestCase):
         u, v = '1', '2'  # edge u-->v is inhibited
         g = op.to_dict(ex.graph_I)
         bin = defaultdict(set)
-        self.assertEqual(exactly_one_one_inhibited(g, u, v, bin), {'2T': ['3T'], '1T': ['2F'], '1F': ['2T']})
+        correct_answer = {'2T': set(['3T']), '1T': set(['2F']), '1F': set(['2T'])}
+        self.assertEqual(exactly_one_one_inhibited(g, u, v, bin), correct_answer)
 
     def test_exactly_one_one_inhibited_len_more_than_1(self):
         u, v = '123', '1'  # edge u-->v is inhibited
         g = {'123': ['1'], '1': ['125'], '125': []}
         bin = defaultdict(set)
         correct_answer = {'1T': ['125T'], '123T': ['1F'], '123F': ['1T']}
+        for key, value in correct_answer.iteritems():
+            correct_answer[key] = set(value)
         self.assertEqual(exactly_one_one_inhibited(g, u, v, bin), correct_answer)
 
     def test_exactly_one_one_inhibited_len_more_than_1_reverse(self):
@@ -255,6 +264,8 @@ class TestExactly_one_one_inhibited(TestCase):
         g = {'1': ['123'], '123': ['125'], '125': []}
         bin = defaultdict(set)
         correct_answer = {'123T': ['125T'], '1T': ['123F'], '1F': ['123T']}
+        for key, value in correct_answer.iteritems():
+            correct_answer[key] = set(value)
         self.assertEqual(exactly_one_one_inhibited(g, u, v, bin), correct_answer)
 
 
@@ -265,6 +276,8 @@ class TestMore_than_one_one_inhibited(TestCase):
         g = op.to_dict(ex.graph_II)
         bin = defaultdict(set)
         correct_answer = {'2T': ['3T'], '1T': ['3F'], '1F2T': ['3T'], '1F': ['3T'], '2F': ['3F'], '1T2F': ['3F']}
+        for key, value in correct_answer.iteritems():
+            correct_answer[key] = set(value)
         self.assertEqual(more_than_one_one_inhibited(g, u, v, bin), correct_answer)
 
     def test_more_than_one_one_inhibited_len_more_than_1(self):
@@ -273,6 +286,8 @@ class TestMore_than_one_one_inhibited(TestCase):
         bin = defaultdict(set)
         correct_answer = {'123T': ['1T'], '123F': ['1F'], '125T': ['1F'], '125F': ['1T'], '125T123F': ['1F'],
                           '125F123T': ['1T']}
+        for key, value in correct_answer.iteritems():
+            correct_answer[key] = set(value)
         self.assertEqual(more_than_one_one_inhibited(g, u, v, bin), correct_answer)
 
     def test_more_than_one_one_inhibited_len_more_than_1_reverse(self):
@@ -281,6 +296,8 @@ class TestMore_than_one_one_inhibited(TestCase):
         bin = defaultdict(set)
         correct_answer = {'1T': ['123T'], '1F': ['123F'], '12T': ['123F'], '12F': ['123T'], '12T1F': ['123F'],
                           '12F1T': ['123T']}
+        for key, value in correct_answer.iteritems():
+            correct_answer[key] = set(value)
         self.assertEqual(more_than_one_one_inhibited(g, u, v, bin), correct_answer)
 
 
@@ -291,6 +308,8 @@ class Testexactly_one_no_inhibited(TestCase):
         g = op.to_dict(ex.graph_V)
         bin = defaultdict(set)
         correct_answer = {'1T': ['2T'], '1F': ['2F']}
+        for key, value in correct_answer.iteritems():
+            correct_answer[key] = set(value)
         self.assertEqual(exactly_one_no_inhibited(g, v, bin), correct_answer)
 
     def test_exactly_one_no_inhibited_len_more_than_1(self):
@@ -298,6 +317,8 @@ class Testexactly_one_no_inhibited(TestCase):
         g = {'123': ['2']}
         bin = defaultdict(set)
         correct_answer = {'123T': ['2T'], '123F': ['2F']}
+        for key, value in correct_answer.iteritems():
+            correct_answer[key] = set(value)
         self.assertEqual(exactly_one_no_inhibited(g, v, bin), correct_answer)
 
     def test_exactly_one_no_inhibited_len_more_than_1_reverse(self):
@@ -305,6 +326,8 @@ class Testexactly_one_no_inhibited(TestCase):
         g = {'2': ['123']}
         bin = defaultdict(set)
         correct_answer = {'2T': ['123T'], '2F': ['123F']}
+        for key, value in correct_answer.iteritems():
+            correct_answer[key] = set(value)
         self.assertEqual(exactly_one_no_inhibited(g, v, bin), correct_answer)
 
 
@@ -315,6 +338,8 @@ class Testmore_than_one_no_inhibited(TestCase):
         g = {'123': ['1'], '125': ['1'], '1': []}
         bin = defaultdict(set)
         correct_answer = {'123T': ['1T'], '125F': ['1F'], '123F': ['1F'], '125T': ['1T'], '123T125T': ['1T']}
+        for key, value in correct_answer.iteritems():
+            correct_answer[key] = set(value)
         self.assertEqual(more_than_one_no_inhibited(g, v, bin), correct_answer)
 
     def test_more_than_one_no_inhibited_len_more_1(self):
@@ -324,6 +349,8 @@ class Testmore_than_one_no_inhibited(TestCase):
         correct_answer = {'1T12T': ['123T'],
                           '12T': ['123T'], '12F': ['123F'],
                           '1F': ['123F'], '1T': ['123T']}
+        for key, value in correct_answer.iteritems():
+            correct_answer[key] = set(value)
         self.assertEqual(more_than_one_no_inhibited(g, v, bin), correct_answer)
 
 
@@ -336,6 +363,8 @@ class Testtwo_or_more_all_inhibited(TestCase):
         correct_answer = {'2T': ['3F'], '2F': ['3T'],
                           '1F': ['3T'], '1T': ['3F'],
                           '1F2F': ['3T'], '1T2T': ['3F']}
+        for key, value in correct_answer.iteritems():
+            correct_answer[key] = set(value)
         self.assertEqual(two_or_more_all_inhibited(g, v, bin), correct_answer)
 
     def test_two_or_more_all_inhibited_len_more_1(self):
@@ -345,4 +374,6 @@ class Testtwo_or_more_all_inhibited(TestCase):
         correct_answer = {'1F12F': ['123T'], '1T12T': ['123F'],
                           '1T': ['123F'], '1F': ['123T'],
                           '12F': ['123T'], '12T': ['123F']}
+        for key, value in correct_answer.iteritems():
+            correct_answer[key] = set(value)
         self.assertEqual(two_or_more_all_inhibited(g, v, bin), correct_answer)
