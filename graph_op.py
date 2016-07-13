@@ -118,7 +118,6 @@ def incompatible_nodes(node):
         node_list = [swap_true_and_false(node)]
         node_list.extend(split_composite_node(node))
         node_list.extend(split_composite_node(swap_true_and_false(node)))
-        # TODO have to bring in node:[values] to generate even more inc nodes!
         return node_list
 
 
