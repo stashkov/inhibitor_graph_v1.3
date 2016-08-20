@@ -396,7 +396,7 @@ class Testget_number_of_nodes(TestCase):
         d = {'1T6T': ['3T'], '2T': ['3T'], '3T': []}
         self.assertEqual(op.get_number_of_nodes(d), 4)
 
-    def test_get_number_of_nodes_composite(self):
+    def test_get_number_of_nodes_composite_1(self):
         d = {'1T': ['2T'], '2T': []}
         self.assertEqual(op.get_number_of_nodes(d), 2)
 
@@ -501,3 +501,37 @@ class TestRecursive_teardown(TestCase):
         self.assertEqual(
             i.recursive_teardown(node, d, node_count, result, not_feasible, pre_inc_nodes, recursion_level=0),
             None)
+
+
+    def test_recursive_teardown_return_disconnected(self):
+        # this dict is compatible with itself but is disconnected
+        node = '1T'
+        d = {'1T': [], '2F': []}
+        node_count = 2
+        result = []
+        not_feasible = [[], [], [], []]
+        pre_inc_nodes = {'2F': ['2T'], '2T': ['2F'], '1T': []}
+        self.assertEqual(
+            i.recursive_teardown(node, d, node_count, result, not_feasible, pre_inc_nodes, recursion_level=0),
+            None)
+
+
+    def test_recursive_teardown_return_not_feasible(self):
+        # this dict is compatible with itself but is disconnected
+        node = '1T'
+        d = {'1T': [], '2F': []}
+        node_count = 2
+        result = []
+        not_feasible = [[], [], [{'1T': [], '2F': []}], []]
+        pre_inc_nodes = {'2F': ['2T'], '2T': ['2F'], '1T': []}
+        self.assertEqual(
+            i.recursive_teardown(node, d, node_count, result, not_feasible, pre_inc_nodes, recursion_level=0),
+            None)
+
+
+class TestSet_up_preset(TestCase):
+    def test_set_up_preset(self):
+        correct_answer = (
+            {'2T': ['3T'], '1T': ['3F'], '1F2T': ['3T'], '3T': [],
+             '1F': ['3T'], '2F': ['3F'], '1T2F': ['3F'], '3F': []}, 3)
+        self.assertEqual(i.set_up_preset(ex.graph_II), correct_answer)

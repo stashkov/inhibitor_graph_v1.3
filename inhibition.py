@@ -6,11 +6,12 @@ import itertools
 import logging
 import time
 from multiprocessing import Process, Manager, cpu_count, current_process
+import example_graphs as ex
 
 NUMBER_OF_ALLOWED_PROCESSES = cpu_count() - 1
 logger = logging.getLogger(__name__)
-#logging.basicConfig(level=logging.DEBUG, filename='hello.log')
-logging.basicConfig(level=logging.DEBUG)
+#logging.basicConfig(level=logging.INFO, filename='hello.log')
+logging.basicConfig(level=logging.INFO)
 
 
 # create a file handler
@@ -94,9 +95,6 @@ def helper_deadend_nodes(bin_of_edges):
     return bin_of_edges
 
 
-# def is_feasible(node_count, d):
-#     return node_count < op.get_number_of_nodes(d)  # 6 < 7, we have 6 in original, and 7 in d, we still have a chance
-
 def add_to_not_feasible(d, not_feasible):
     # not_feasible.setdefault(len(d), []).append(d)
     row = not_feasible[len(d)]
@@ -105,43 +103,36 @@ def add_to_not_feasible(d, not_feasible):
     return not_feasible
 
 
-def recursive_teardown(node, d, node_count, result, not_feasible, pre_inc_nodes, recursion_level=0):
-    # global cnt_inc_nodes
-    logger.debug('we got dict %s' % d)
-    d = remove_incompatible_nodes(d, pre_inc_nodes[node])
-    # length_d = len(d)
-    # if length_d in not_feasible.keys() and d in not_feasible[length_d]:
-    if d in not_feasible[len(d)]:
+def recursive_teardown(node, dict_graph, node_count, result, not_feasible, known_incompatible, recursion_level=0):
+    logger.debug('we got dict %s' % dict_graph)
+    dict_graph = remove_incompatible_nodes(dict_graph, known_incompatible[node])
+    logger.debug('after removal we have %s' % dict_graph)
+    if dict_graph in not_feasible[len(dict_graph)]:
         logger.debug('this dict is incompatible because it was in inc list')
         return
-    logger.debug('after removal we have %s' % d)
-    if node_count > op.get_number_of_nodes(d):
+    if node_count > op.get_number_of_nodes(dict_graph):
         logger.debug('this dict is incompatible because original node count %i > current node count %i' % (
-            node_count, op.get_number_of_nodes(d)))
-        not_feasible = add_to_not_feasible(d, not_feasible)  # add to list of dict we know for sure to be not feasible
-        return  # check if dict has the same number of nodes (even if they are now composite nodes)
-    nodes_inside = op.get_nodes_incompatible_inside_dict(d)
-    logger.debug('inc nodes_inside %s' % nodes_inside)
+            node_count, op.get_number_of_nodes(dict_graph)))
+        not_feasible = add_to_not_feasible(dict_graph, not_feasible)  # add to list of dict we know for sure to be not feasible
+        return
+    nodes_inside = op.get_nodes_incompatible_inside_dict(dict_graph)
+    logger.debug('incompatible nodes inside dict: %s' % nodes_inside)
     if nodes_inside:  # check if d is incompatible with itself
-        # if len(nodes_inside) > 100:
-        #     cnt_inc_nodes.append(len(nodes_inside))
-        #     logger.info('the number %s of inc nodes is too large %s' % (len(nodes_inside), nodes_inside))
-        #     return
         for i in nodes_inside:
             logger.debug('inside recursive lvl %s, working with node %s' % (recursion_level, i))
-            temp_dict = copy.deepcopy(d)
-            recursive_teardown(i, temp_dict, node_count, result, not_feasible, pre_inc_nodes,
+            temp_dict = copy.deepcopy(dict_graph)
+            recursive_teardown(i, temp_dict, node_count, result, not_feasible, known_incompatible,
                                recursion_level=recursion_level + 1)
     else:
-        if op.is_connected(d):
-            logger.debug('HOORAY! WE GOT AN ANSWER \n %s' % d)
-            if d not in result:
-                result.append(d)
+        if op.is_connected(dict_graph):
+            logger.debug('HOORAY! WE GOT AN ANSWER \n %s' % dict_graph)
+            if dict_graph not in result:
+                result.append(dict_graph)
             logger.debug('--------------------')
-            return d  # we got an answer!
+            return dict_graph  # we got an answer!
         else:
             logger.debug('this dict is incompatible because it is not connected')
-            not_feasible = add_to_not_feasible(d,
+            not_feasible = add_to_not_feasible(dict_graph,
                                                not_feasible)  # add to list of dict we know for sure to be not feasible
             return  # if graph is disconnected, we don't want it
             # logger.debug('quitting the stack for node %s' % node)
@@ -165,49 +156,46 @@ def remove_incompatible_nodes(d, incompatible_nodes):
             del d[i]
     return d
 
+# def process_sequentially(bin_of_edges, ):
+#     for i in b.keys():
+#         temp_ = copy.deepcopy(b)
+#         logger.info('Next iteration. Working with node %s, which is #%s out of %s' % (i, lst.index(i)+1, len(lst)))
+#         recursive_teardown(i, temp_, node_count, result, not_feasible, known_incompatible_nodes)
+
 
 def execute_algo(b, node_count):
-    manager = Manager()
-    result = manager.list()
-    not_feasible = manager.list()
-    # empty list of lists to hold corresponding length incompatible dictionaries
-    for i in range(len(b)):
+    result = Manager().list()
+    not_feasible = Manager().list()
+    for i in range(len(b)):  # empty list of lists to hold corresponding length incompatible dictionaries
         not_feasible.append([])
 
-    lst = [key for key, value in b.iteritems() if value != []]  # probably can remove leaf nodes?
     logger.info('Bin of edges:%s' % b)
-    logger.info('We got %s nodes. Entire list is: %s' % (len(lst), lst))
+    logger.info('We got %s nodes. Entire list is: %s' % (len(b.keys()), b.keys()))
 
-    global pre_inc_nodes
-    # # sequential execution
-    # for i in lst:
-    #     temp_ = copy.deepcopy(b)
-    #     logger.info('Next iteration. Working with node %s, which is #%s out of %s' % (i, lst.index(i)+1, len(lst)))
-    #     recursive_teardown(i, temp_, node_count, result, not_feasible, pre_inc_nodes)
-
+    global known_incompatible_nodes
     # # parallel execution
     jobs = []
-    for i in lst:
+    for i in b.keys():
         temp_ = copy.deepcopy(b)
-        logger.info('Next iteration. Working with node %s, which is #%s out of %s' % (i, lst.index(i) + 1, len(lst)))
-        p = Process(target=recursive_teardown, args=(i, temp_, node_count, result, not_feasible, pre_inc_nodes))
+        logger.info('Next iteration. Working with node %s, which is #%s out of %s' % (i, b.keys().index(i) + 1, len(b.keys())))
+        p = Process(target=recursive_teardown, args=(i, temp_, node_count, result, not_feasible, known_incompatible_nodes))
         p.daemon = True  # make it a daemon so that sleep() in main does not affect other threads
         jobs.append(p)
         p.start()
 
         while len([1 for j in jobs if j.is_alive() == True]) >= NUMBER_OF_ALLOWED_PROCESSES:
-            time.sleep(2)
+            time.sleep(3)
     while any([j.is_alive() for j in jobs]):
         logger.debug([j for j in jobs if j.is_alive() == True])
-        logger.info('Processes completed %s out of %s' % (len([j for j in jobs if j.is_alive() == False]), len(lst)))
+        logger.info('Processes completed %s out of %s' % (len([j for j in jobs if j.is_alive() == False]), len(b.keys())))
         time.sleep(5)
     p.join()
 
-    # logger.info('Processes completed %s out of %s' % (len([j for j in jobs if j.is_alive() == False]), len(lst)))
+    # logger.info('Processes completed %s out of %s' % (len([j for j in jobs if j.is_alive() == False]), len(b.keys())))
+    # logger.info('We got infeasible dict %s' % not_feasible)
+    logger.info('We got %s infeasible dicts' % len(not_feasible))
     logger.info('results are:\n%s' % result)
     logger.info('number of results: %s' % len(result))
-    logger.info('We got infeasible dict %s' % not_feasible)
-    logger.info('We got %s infeasible dicts' % len(not_feasible))
     return result
 
 
@@ -215,43 +203,31 @@ def set_up_random(num_of_nodes):
     g, m = generate_graph(num_of_nodes)
     node_count = num_of_nodes
     b = generate_bin_of_edges(g, m)
-    b = op.convert_directed_to_undirected(b)
+    b = op.convert_directed_to_undirected(b)  # DOMINATING!
     return b, node_count
 
 
-def set_up_preset():
-    import example_graphs as ex
-    m = ex.graph_II
-    node_count = 3
-    g = op.to_dict(m)
-    b = generate_bin_of_edges(g, m)
+def set_up_preset(matrix_graph):
+    node_count = len(matrix_graph)
+    dict_graph = op.to_dict(matrix_graph)
+    b = generate_bin_of_edges(dict_graph, matrix_graph)
     return b, node_count
 
 
-def set_up_with_dict():
-    # TODO preserve inhibited edges
-    g = {'1': ['4', '5'], '3': ['6'], '2': ['3', '4', '6'], '5': ['6'], '4': ['5', '6'], '6': []}
-    m = op.to_adj_matrix(g)
-    node_count = 6
-    b = generate_bin_of_edges(g, m)
-    return b, node_count
+def get_known_incompatible(bin_of_edges):
+    return {i: op.nodes_incompatible_with_dict(i, bin_of_edges) for i in bin_of_edges.keys()}
 
 
 if __name__ == '__main__':
-    start = time.time();
-    bin, n_count = set_up_random(10)
-    #bin, n_count = set_up_preset()
-    # bin, n_count = set_up_with_dict()
-    logger.info('bin of nodes: %s' % bin)
-    pre_inc_nodes = {i: op.nodes_incompatible_with_dict(i, bin) for i in bin.keys()}
-    print pre_inc_nodes
+    start = time.time()
+    #b, n_count = set_up_random(100)
+    b, n_count = set_up_preset(ex.graph_II)
+    logger.info('bin of nodes: %s' % b)
 
-    logger.info('dict of inc nodes: %s' % pre_inc_nodes)
+    known_incompatible_nodes = get_known_incompatible(b)
+    logger.info('dict of inc nodes: %s' % known_incompatible_nodes)
 
-    execute_algo(bin, n_count)
+    execute_algo(b, n_count)
     logger.info('Execution time: %s' % str(time.time() - start))
     # logger.info('cnt of inc nodes %s' % cnt_inc_nodes)
-
-
-
     # main()
