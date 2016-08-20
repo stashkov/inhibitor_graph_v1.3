@@ -79,13 +79,12 @@ def to_dict(adj_matrix):
 
 def to_adj_matrix(d):
     """convert graph from dict to adj matrix"""
-    all_nodes = d.keys()
+    all_nodes = sorted(d.keys())
+    # TODO if set(d.values()) != set(d.keys()) then add empty nodes e.g. {2:[]}
     m = []
     for v in all_nodes:
         if v in d.keys():
             m.append([1 if e in d[v] else 0 for e in all_nodes])
-        else:
-            m.append([0] * len(all_nodes))
     return m
 
 
@@ -157,7 +156,7 @@ def nodes_incompatible_with_dict(node, d):
     return list(res)
 
 
-def nodes_incompatible_with_dict_itself(d):
+def get_nodes_incompatible_inside_dict(d):
     """dict {'5T': '6F', '5F': '6T'} is incompatible with itself"""
     lst = d.keys()
     res = set()
@@ -178,7 +177,7 @@ def convert_directed_to_undirected(d):
     return undirected_d
 
 
-def number_of_nodes_in(d):
+def get_number_of_nodes(d):
     l = [split_composite_node(i) for i in d.keys()]
     return len({i[:-1] for i in itertools.chain.from_iterable(l)})
 

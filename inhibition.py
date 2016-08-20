@@ -90,7 +90,7 @@ def helper_deadend_nodes(bin_of_edges):
 
 
 # def is_feasible(node_count, d):
-#     return node_count < op.number_of_nodes_in(d)  # 6 < 7, we have 6 in original, and 7 in d, we still have a chance
+#     return node_count < op.get_number_of_nodes(d)  # 6 < 7, we have 6 in original, and 7 in d, we still have a chance
 
 def add_to_not_feasible(d, not_feasible):
     # not_feasible.setdefault(len(d), []).append(d)
@@ -101,7 +101,7 @@ def add_to_not_feasible(d, not_feasible):
 
 
 def recursive_teardown(node, d, node_count, result, not_feasible, pre_inc_nodes, recursion_level=0):
-    global cnt_inc_nodes
+    #global cnt_inc_nodes
     logger.debug('we got dict %s' % d)
     d = remove_incompatible_nodes(d, pre_inc_nodes[node])
     # length_d = len(d)
@@ -110,11 +110,11 @@ def recursive_teardown(node, d, node_count, result, not_feasible, pre_inc_nodes,
         logger.debug('this dict is incompatible because it was in inc list')
         return
     logger.debug('after removal we have %s' % d)
-    if node_count > op.number_of_nodes_in(d):
-        logger.debug('this dict is incompatible because original node count %i > current node count %i' % (node_count, op.number_of_nodes_in(d)))
+    if node_count > op.get_number_of_nodes(d):
+        logger.debug('this dict is incompatible because original node count %i > current node count %i' % (node_count, op.get_number_of_nodes(d)))
         not_feasible = add_to_not_feasible(d, not_feasible)  # add to list of dict we know for sure to be not feasible
         return  # check if dict has the same number of nodes (even if they are now composite nodes)
-    nodes_inside = op.nodes_incompatible_with_dict_itself(d)
+    nodes_inside = op.get_nodes_incompatible_inside_dict(d)
     logger.debug('inc nodes_inside %s' % nodes_inside)
     if nodes_inside:  # check if d is incompatible with itself
         # if len(nodes_inside) > 100:
@@ -164,7 +164,7 @@ def execute_algo(b, node_count):
     not_feasible = manager.list()
     for i in range(len(b)):
         not_feasible.append([])
-    cnt_inc_nodes = manager.list()
+    #cnt_inc_nodes = manager.list()
 
 
     lst = [key for key, value in b.iteritems() if value != []]  # probably can remove leaf nodes?
@@ -172,7 +172,7 @@ def execute_algo(b, node_count):
     logger.info('We got %s nodes. Entire list is: %s' % (len(lst), lst))
 
     global pre_inc_nodes
-    global cnt_inc_nodes
+    #global cnt_inc_nodes
     # # sequential execution
     # for i in lst:
     #     temp_ = copy.deepcopy(b)
@@ -201,6 +201,7 @@ def execute_algo(b, node_count):
     logger.info('number of results: %s' % len(result))
     logger.info('We got infeasible dict %s' % not_feasible)
     logger.info('We got %s infeasible dicts' % len(not_feasible))
+    return result
 
 
 def set_up_random(num_of_nodes):
@@ -231,8 +232,9 @@ def set_up_with_dict():
 
 if __name__ == '__main__':
     start = time.time();
-    bin, n_count = set_up_random(100)
-    #bin, n_count = set_up_preset()
+    #bin, n_count = set_up_random(100)
+    bin, n_count = set_up_preset()
+    print bin, n_count
     #bin, n_count = set_up_with_dict()
     logger.info('bin of nodes: %s' % bin)
     pre_inc_nodes = {i: op.nodes_incompatible_with_dict(i, bin) for i in bin.keys()}
@@ -241,7 +243,7 @@ if __name__ == '__main__':
 
     execute_algo(bin, n_count)
     logger.info('Execution time: %s' % str(time.time() - start))
-    logger.info('cnt of inc nodes %s' % cnt_inc_nodes)
+    #logger.info('cnt of inc nodes %s' % cnt_inc_nodes)
 
 
 

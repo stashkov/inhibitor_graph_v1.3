@@ -8,7 +8,6 @@ from rule import exactly_one_one_inhibited, more_than_one_one_inhibited, exactly
     more_than_one_no_inhibited, two_or_more_all_inhibited
 
 
-
 class TestRemove_incompatible_nodes(TestCase):
     def test_remove_incompatible_nodes(self):
         d = {'1F': ['2T', '3T'],
@@ -31,7 +30,6 @@ class TestRemove_incompatible_nodes(TestCase):
         self.assertEqual(i.remove_incompatible_nodes(d, inc_nodes), correct_answer)
 
 
-
 class TestOut_degree(TestCase):
     def test_out_degree_I(self):
         self.assertEqual(op.out_degree(ex.graph_I), {'1': 1, '2': 1, '3': 0})
@@ -46,7 +44,7 @@ class TestOut_degree(TestCase):
         self.assertEqual(op.out_degree(ex.graph_IV), {'1': 1, '2': 1, '3': 0})
 
     def test_out_degree_V(self):
-        self.assertEqual(op.out_degree(ex.graph_V), {'1': 0, '2': 1})
+        self.assertEqual(op.out_degree(ex.graph_V), {'1': 1, '2': 0})
 
     def test_out_degree_VI(self):
         self.assertEqual(op.out_degree(ex.graph_VI), {'1': 1, '2': 1, '3': 0})
@@ -61,7 +59,7 @@ class TestOut_degree(TestCase):
         self.assertEqual(op.out_degree(ex.graph_XXI), {'1': 4, '2': 1, '3': 1, '4': 0, '5': 0})
 
 
-class TestOut_degree(TestCase):
+class TestIn_degree(TestCase):
     def test_in_degree_I(self):
         self.assertEqual(op.in_degree(ex.graph_I), {'1': 0, '2': 1, '3': 1})
 
@@ -142,10 +140,12 @@ class TestConvert_adj_matrix_to_dict(TestCase):
         self.assertEqual(op.to_dict(ex.graph_X), {'1': ['4'], '2': ['4'], '3': ['4'], '4': []})
 
     def test_convert_adj_matrix_to_dict_test(self):
-        self.assertEqual(op.to_dict(ex.graph_test), {'1': ['3'], '2': ['3'], '3': ['4', '5'], '4': [], '5': ['6'], '6': ['7'], '7': []})
+        self.assertEqual(op.to_dict(ex.graph_test),
+                         {'1': ['3'], '2': ['3'], '3': ['4', '5'], '4': [], '5': ['6'], '6': ['7'], '7': []})
 
     def test_convert_adj_matrix_to_dict_XXI(self):
-        self.assertEqual(op.to_dict(ex.graph_XXI), {'1': ['2', '3', '4', '5'], '2': ['4'], '3': ['5'], '4': [], '5': []})
+        self.assertEqual(op.to_dict(ex.graph_XXI),
+                         {'1': ['2', '3', '4', '5'], '2': ['4'], '3': ['5'], '4': [], '5': []})
 
 
 class TestGenerate_adj_matrix(TestCase):
@@ -188,7 +188,7 @@ class TestInc_nodes(TestCase):
 
     def test_nodes_incompatible_with_dict_comp_node_incompatible(self):
         n = '12F8T'
-        d = {'1F': ['123T'], '5F': ['123F5T', '16T'], '88T12F': ['123T7T', '12F'], '12F8T':[], '12F':[]}
+        d = {'1F': ['123T'], '5F': ['123F5T', '16T'], '88T12F': ['123T7T', '12F'], '12F8T': [], '12F': []}
         correct_answer = ['12F', '88T12F']
         self.assertEqual(op.nodes_incompatible_with_dict(n, d), correct_answer)
 
@@ -207,19 +207,19 @@ class TestInc_nodes(TestCase):
 
 class Testis_connected(TestCase):
     def test_is_connected_false(self):
-        d = {'1':['2', '3'], '4':['6','7'], '3':[], '2':[], '6':[], '7':[]} # two disconnected components
+        d = {'1': ['2', '3'], '4': ['6', '7'], '3': [], '2': [], '6': [], '7': []}  # two disconnected components
         self.assertFalse(op.is_connected(d))
 
     def test_is_connected_false_1(self):
-        d = {'1': [], '3': []} # two disconnected components
+        d = {'1': [], '3': []}  # two disconnected components
         self.assertFalse(op.is_connected(d))
 
     def test_is_connected_true(self):
-        d = {'1': ['2', '3'], '3': ['6', '7'], '2':[], '6':[], '7':[]}
+        d = {'1': ['2', '3'], '3': ['6', '7'], '2': [], '6': [], '7': []}
         self.assertTrue(op.is_connected(d))
 
     def test_is_connected_false_1(self):
-        d = {'2T': [], '1F': ['2T'], '3F': []} # not connected
+        d = {'2T': [], '1F': ['2T'], '3F': []}  # not connected
         self.assertFalse(op.is_connected(d))
 
     def test_is_connected_true_1(self):
@@ -237,8 +237,6 @@ class Testconvert_directed_to_undirected(TestCase):
         d = {'1': ['2', '3'], '2': [], '3': []}
         correct_answer = {'1': ['2', '3'], '2': ['1'], '3': ['1']}
         self.assertEqual(op.convert_directed_to_undirected(d), correct_answer)
-
-
 
 
 class TestExactly_one_one_inhibited(TestCase):
@@ -301,7 +299,7 @@ class TestMore_than_one_one_inhibited(TestCase):
         self.assertEqual(more_than_one_one_inhibited(g, u, v, bin), correct_answer)
 
 
-class Testexactly_one_no_inhibited(TestCase):
+class TestExactly_one_no_inhibited(TestCase):
     # CASE V
     def test_exactly_one_no_inhibited(self):
         v = '2'
@@ -377,3 +375,81 @@ class Testtwo_or_more_all_inhibited(TestCase):
         for key, value in correct_answer.iteritems():
             correct_answer[key] = set(value)
         self.assertEqual(two_or_more_all_inhibited(g, v, bin), correct_answer)
+
+
+class TestTo_adj_matrix(TestCase):
+    def test_to_adj_matrix(self):
+        g = {'1': ['3'], '2': ['3'], '3': []}
+        self.assertEqual(op.to_adj_matrix(g), [[0, 0, 1], [0, 0, 1], [0, 0, 0]])
+
+        # def test_to_adj_matrix_else_case(self):
+        #     g = {'1': ['3'], '2': ['3']}
+        #     self.assertEqual(op.to_adj_matrix(g), [[0, 0, 1], [0, 0, 1], [0, 0, 0]])
+
+
+class Testget_number_of_nodes(TestCase):
+    def test_get_number_of_nodes(self):
+        d = {'1T': ['3T'], '2T': ['3T'], '3T': []}
+        self.assertEqual(op.get_number_of_nodes(d), 3)
+
+    def test_get_number_of_nodes_composite(self):
+        d = {'1T6T': ['3T'], '2T': ['3T'], '3T': []}
+        self.assertEqual(op.get_number_of_nodes(d), 4)
+
+
+class TestGet_nodes_incompatible_inside_dict(TestCase):
+    def test_get_nodes_incompatible_inside_dict(self):
+        d = {'5T': ['6F'], '5F': ['6T'], '6F': [], '6T': []}
+        self.assertEqual(op.get_nodes_incompatible_inside_dict(d), ['5T', '5F', '6T', '6F'])
+
+
+class TestGenerate_graph(TestCase):
+    def test_generate_graph(self):
+        # since function is random, at least we can test the size of the returning obj
+        self.assertEqual(len(i.generate_graph(5)[0]), 5)
+        self.assertEqual(len(i.generate_graph(5)[1]), 5)
+
+
+class TestGenerate_bin_of_edges(TestCase):
+    def test_generate_bin_of_edges(self):
+        g = {'1': ['3'], '2': ['3'], '3': []}
+        m = [[0, 0, 1], [0, 0, 1], [0, 0, 0]]
+        correct_answer = {'2T': ['3T'], '2F': ['3F'], '1T': ['3T'], '1T2T': ['3T'], '1F': ['3F'], '3F': [], '3T': []}
+        self.assertEqual(i.generate_bin_of_edges(g, m), correct_answer)
+
+    def test_generate_bin_of_edges_inhib(self):
+        g = {'1': ['3'], '2': ['3'], '3': []}
+        m = [[0, 0, 1], [0, 0, -1], [0, 0, 0]]
+        correct_answer = {'2T': ['3T'], '1T': ['3F'], '1F2T': ['3T'], '3T': [],
+                          '1F': ['3T'], '2F': ['3F'], '1T2F': ['3F'], '3F': []}
+        self.assertEqual(i.generate_bin_of_edges(g, m), correct_answer)
+
+    def test_generate_bin_of_edges_inhib_degree_2(self):
+        g = {'1': ['3'], '2': ['3'], '3': []}
+        m = [[0, 0, -1], [0, 0, -1], [0, 0, 0]]
+        correct_answer = {'2T': ['3F'], '1F2F': ['3T'], '1T2T': ['3F'], '2F': ['3T'],
+                          '1F': ['3T'], '1T': ['3F'], '3F': [], '3T': []}
+        self.assertEqual(i.generate_bin_of_edges(g, m), correct_answer)
+
+    def test_generate_bin_of_edges_inhib_degree_1(self):
+        g = {'1': ['2'], '2': []}
+        m = [[0, -1], [0, 0]]
+        correct_answer = {'2T': [], '2F': [], '1T': ['2F'], '1F': ['2T']}
+        self.assertEqual(i.generate_bin_of_edges(g, m), correct_answer)
+
+    def test_generate_bin_of_edges_inhib_degree_0(self):
+        g = {'1': ['2'], '2': []}
+        m = [[0, 1], [0, 0]]
+        correct_answer = {'2T': [], '2F': [], '1T': ['2T'], '1F': ['2F']}
+        self.assertEqual(i.generate_bin_of_edges(g, m), correct_answer)
+
+
+class TestExecute_algo(TestCase):
+    def test_execute_algo(self):
+        node_count = 3  # ex.graph_II
+        b = {'2T': ['3T'], '1T': ['3F'], '1F2T': ['3T'], '3T': [], '1F': ['3T'], '2F': ['3F'], '1T2F': ['3F'], '3F': []}
+        correct_answer = {'2T': ['3T'], '1F': ['3T'], '3T': [],
+                          '2F': ['3F'], '1T': ['3F'], '3F': [],
+                          '1F2T': ['3T'], '3T': [],
+                          '3F': [], '1T2F': ['3F']}
+        self.assertEqual(i.execute_algo(b, node_count), correct_answer)
