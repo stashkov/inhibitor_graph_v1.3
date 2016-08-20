@@ -396,6 +396,10 @@ class Testget_number_of_nodes(TestCase):
         d = {'1T6T': ['3T'], '2T': ['3T'], '3T': []}
         self.assertEqual(op.get_number_of_nodes(d), 4)
 
+    def test_get_number_of_nodes_composite(self):
+        d = {'1T': ['2T'], '2T': []}
+        self.assertEqual(op.get_number_of_nodes(d), 2)
+
 
 class TestGet_nodes_incompatible_inside_dict(TestCase):
     def test_get_nodes_incompatible_inside_dict(self):
@@ -444,12 +448,56 @@ class TestGenerate_bin_of_edges(TestCase):
         self.assertEqual(i.generate_bin_of_edges(g, m), correct_answer)
 
 
-class TestExecute_algo(TestCase):
-    def test_execute_algo(self):
-        node_count = 3  # ex.graph_II
-        b = {'2T': ['3T'], '1T': ['3F'], '1F2T': ['3T'], '3T': [], '1F': ['3T'], '2F': ['3F'], '1T2F': ['3F'], '3F': []}
-        correct_answer = {'2T': ['3T'], '1F': ['3T'], '3T': [],
-                          '2F': ['3F'], '1T': ['3F'], '3F': [],
-                          '1F2T': ['3T'], '3T': [],
-                          '3F': [], '1T2F': ['3F']}
-        self.assertEqual(i.execute_algo(b, node_count), correct_answer)
+# class TestExecute_algo(TestCase):
+#     def test_execute_algo(self):
+#         node_count = 3  # ex.graph_II
+#         b = {'2T': ['3T'], '1T': ['3F'], '1F2T': ['3T'], '3T': [], '1F': ['3T'], '2F': ['3F'], '1T2F': ['3F'], '3F': []}
+#         correct_answer = {'2T': ['3T'], '1F': ['3T'], '3T': [],
+#                           '2F': ['3F'], '1T': ['3F'], '3F': [],
+#                           '1F2T': ['3T'], '3T': [],
+#                           '3F': [], '1T2F': ['3F']}
+#         self.assertEqual(i.execute_algo(b, node_count), correct_answer)
+
+
+class TestAdd_to_not_feasible(TestCase):
+    def test_add_to_not_feasible(self):
+        d = {'1T': ['2T'], '2F': []}
+        nf = [[], [], []]
+        correct_answer = [[], [], [{'2F': [], '1T': ['2T']}]]
+        self.assertEqual(i.add_to_not_feasible(d, nf), correct_answer)
+
+
+class TestRecursive_teardown(TestCase):
+    def test_recursive_teardown_none(self):
+        node = '2F'
+        d = {'1T': ['2T'], '2F': [], '2T': []}
+        node_count = 2
+        result = []
+        not_feasible = [[], [], []]
+        pre_inc_nodes = {'2F': ['2T']}
+        # this should return none, because if we remove 2T then the dict is incompatible
+        self.assertEqual(
+            i.recursive_teardown(node, d, node_count, result, not_feasible, pre_inc_nodes, recursion_level=0), None)
+
+    def test_recursive_teardown_return_non_empty(self):
+        node = '2T'
+        d = {'1T': ['2T'], '2F': [], '2T': []}
+        node_count = 2
+        result = []
+        not_feasible = [[], [], []]
+        pre_inc_nodes = {'2F': ['2T'], '2T': ['2F']}
+        correct_answer = {'2T': [], '1T': ['2T']}
+        self.assertEqual(
+            i.recursive_teardown(node, d, node_count, result, not_feasible, pre_inc_nodes, recursion_level=0),
+            correct_answer)
+
+    def test_recursive_teardown_return_recursion(self):
+        node = '1T'
+        d = {'1T': ['2T'], '2F': [], '2T': []}
+        node_count = 2
+        result = []
+        not_feasible = [[], [], [], []]
+        pre_inc_nodes = {'2F': ['2T'], '2T': ['2F'], '1T': []}
+        self.assertEqual(
+            i.recursive_teardown(node, d, node_count, result, not_feasible, pre_inc_nodes, recursion_level=0),
+            None)
