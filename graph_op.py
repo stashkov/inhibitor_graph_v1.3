@@ -2,6 +2,7 @@ import re
 import itertools
 import copy
 
+
 def out_degree(adj_matrix):
     vertices = range(1, len(adj_matrix) + 1)
     vertices = [str(i) for i in vertices]

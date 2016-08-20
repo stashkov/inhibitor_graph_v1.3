@@ -7,7 +7,7 @@ import logging
 import time
 from multiprocessing import Process, Manager, cpu_count, current_process
 
-NUMBER_OF_ALLOWED_PROCESSES = cpu_count() - 3
+NUMBER_OF_ALLOWED_PROCESSES = cpu_count() - 1
 logger = logging.getLogger(__name__)
 #logging.basicConfig(level=logging.DEBUG, filename='hello.log')
 logging.basicConfig(level=logging.INFO)
@@ -93,19 +93,20 @@ def helper_deadend_nodes(bin_of_edges):
 #     return node_count < op.number_of_nodes_in(d)  # 6 < 7, we have 6 in original, and 7 in d, we still have a chance
 
 def add_to_not_feasible(d, not_feasible):
-    #not_feasible.setdefault(len(d), []).append(d)
+    # not_feasible.setdefault(len(d), []).append(d)
     row = not_feasible[len(d)]
     row.append(d) # change it
-    not_feasible[len(d)] = row #NOTE: important: copy the row back (otherwise parent process won't see the changes)
+    not_feasible[len(d)] = row  # copies the row back (otherwise parent process won't see the changes)
     return not_feasible
 
 
 def recursive_teardown(node, d, node_count, result, not_feasible, pre_inc_nodes, recursion_level=0):
+    global cnt_inc_nodes
     logger.debug('we got dict %s' % d)
     d = remove_incompatible_nodes(d, pre_inc_nodes[node])
-    #length_d = len(d)
-    #if length_d in not_feasible.keys() and d in not_feasible[length_d]:
-    if d in not_feasible:
+    # length_d = len(d)
+    # if length_d in not_feasible.keys() and d in not_feasible[length_d]:
+    if d in not_feasible[len(d)]:
         logger.debug('this dict is incompatible because it was in inc list')
         return
     logger.debug('after removal we have %s' % d)
@@ -116,6 +117,10 @@ def recursive_teardown(node, d, node_count, result, not_feasible, pre_inc_nodes,
     nodes_inside = op.nodes_incompatible_with_dict_itself(d)
     logger.debug('inc nodes_inside %s' % nodes_inside)
     if nodes_inside:  # check if d is incompatible with itself
+        # if len(nodes_inside) > 100:
+        #     cnt_inc_nodes.append(len(nodes_inside))
+        #     logger.info('the number %s of inc nodes is too large %s' % (len(nodes_inside), nodes_inside))
+        #     return
         for i in nodes_inside:
             logger.debug('inside recursive lvl %s, working with node %s' % (recursion_level, i))
             temp_dict = copy.deepcopy(d)
@@ -159,6 +164,7 @@ def execute_algo(b, node_count):
     not_feasible = manager.list()
     for i in range(len(b)):
         not_feasible.append([])
+    cnt_inc_nodes = manager.list()
 
 
     lst = [key for key, value in b.iteritems() if value != []]  # probably can remove leaf nodes?
@@ -166,6 +172,7 @@ def execute_algo(b, node_count):
     logger.info('We got %s nodes. Entire list is: %s' % (len(lst), lst))
 
     global pre_inc_nodes
+    global cnt_inc_nodes
     # # sequential execution
     # for i in lst:
     #     temp_ = copy.deepcopy(b)
@@ -200,6 +207,7 @@ def set_up_random(num_of_nodes):
     g, m = generate_graph(num_of_nodes)
     node_count = num_of_nodes
     b = generate_bin_of_edges(g, m)
+    b = op.convert_directed_to_undirected(b)
     return b, node_count
 
 
@@ -223,7 +231,7 @@ def set_up_with_dict():
 
 if __name__ == '__main__':
     start = time.time();
-    bin, n_count = set_up_random(10)
+    bin, n_count = set_up_random(100)
     #bin, n_count = set_up_preset()
     #bin, n_count = set_up_with_dict()
     logger.info('bin of nodes: %s' % bin)
@@ -233,6 +241,7 @@ if __name__ == '__main__':
 
     execute_algo(bin, n_count)
     logger.info('Execution time: %s' % str(time.time() - start))
+    logger.info('cnt of inc nodes %s' % cnt_inc_nodes)
 
 
 
