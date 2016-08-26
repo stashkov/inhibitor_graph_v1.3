@@ -7,6 +7,7 @@ import logging
 import time
 from multiprocessing import Process, Manager, cpu_count, current_process
 import example_graphs as ex
+import db_functions as d
 
 NUMBER_OF_ALLOWED_PROCESSES = cpu_count() - 1
 logger = logging.getLogger(__name__)
@@ -43,6 +44,14 @@ def get_graph_stats(dict_graph, matrix_graph):
     inhibited_vertices = set([edge[1] for edge in inhibited_edges])
     non_inhibited_vertices = list(set(dict_graph.keys()) - inhibited_vertices)
 
+    global row_id
+    d.insert_into_db(id=row_id, in_degree=in_degree,
+                   out_degree=out_degree,
+                   inhibited_edges=inhibited_edges,
+                   inhibition_degree=inhibition_degree,
+                   inhibited_vertices=inhibited_vertices,
+                   non_inhibited_vertices=non_inhibited_vertices)
+
     logger.info('input graph --------------->%s' % dict_graph)
     logger.debug('in degree for each node --->%s' % in_degree)
     logger.debug('out degree for each node -->%s' % out_degree)
@@ -54,8 +63,8 @@ def get_graph_stats(dict_graph, matrix_graph):
 
 def generate_bin_of_edges(g, m):
     in_degree, out_degree, \
-    inhibited_edges, inhibition_degree, \
-    inhibited_vertices, non_inhibited_vertices = get_graph_stats(g, m)
+        inhibited_edges, inhibition_degree, \
+        inhibited_vertices, non_inhibited_vertices = get_graph_stats(g, m)
 
     bin_of_edges = defaultdict(set)
     for edge in inhibited_edges:
@@ -65,10 +74,10 @@ def generate_bin_of_edges(g, m):
         if in_degree[v] > 1 and inhibition_degree[v] == 1:  # CASE II
             bin_of_edges = r.more_than_one_one_inhibited(g, u, v, bin_of_edges)
         # if in_degree[v] > 1 and inhibition_degree[v] == 2:  # CASE II
-        #     # TODO
+        # TODO
         # if in_degree[v] > 1 and inhibition_degree[v] > 1 and \
         #    in_degree[v] != inhibition_degree[v]:  # CASE not yet exists :)
-        #     # TODO every possible combination of AND OR over input set
+        # TODO every possible combination of AND OR over input set
         #     pass  # many AND OR cases
         if in_degree[v] == inhibition_degree[v] == 2:  # CASE III
             bin_of_edges = r.two_or_more_all_inhibited(g, v, bin_of_edges)
@@ -169,9 +178,6 @@ def execute_algo(b, node_count):
     for i in range(len(b)):  # empty list of lists to hold corresponding length incompatible dictionaries
         not_feasible.append([])
 
-    logger.info('Bin of edges:%s' % b)
-    logger.info('We got %s nodes. Entire list is: %s' % (len(b.keys()), b.keys()))
-
     global known_incompatible_nodes
     # # parallel execution
     jobs = []
@@ -184,11 +190,11 @@ def execute_algo(b, node_count):
         p.start()
 
         while len([1 for j in jobs if j.is_alive() == True]) >= NUMBER_OF_ALLOWED_PROCESSES:
-            time.sleep(3)
+            time.sleep(.5)
     while any([j.is_alive() for j in jobs]):
         logger.debug([j for j in jobs if j.is_alive() == True])
         logger.info('Processes completed %s out of %s' % (len([j for j in jobs if j.is_alive() == False]), len(b.keys())))
-        time.sleep(5)
+        time.sleep(1)
     p.join()
 
     # logger.info('Processes completed %s out of %s' % (len([j for j in jobs if j.is_alive() == False]), len(b.keys())))
@@ -196,38 +202,48 @@ def execute_algo(b, node_count):
     logger.info('We got %s infeasible dicts' % len(not_feasible))
     logger.info('results are:\n%s' % result)
     logger.info('number of results: %s' % len(result))
+    global row_id
+    d.insert_into_db(row_id, not_feasible=not_feasible, results=result, number_of_results=len(result))
     return result
 
 
 def set_up_random(num_of_nodes):
-    g, m = generate_graph(num_of_nodes)
+    dict_graph, matrix_graph = generate_graph(num_of_nodes)
     node_count = num_of_nodes
-    b = generate_bin_of_edges(g, m)
+    b = generate_bin_of_edges(dict_graph, matrix_graph)
     b = op.convert_directed_to_undirected(b)  # DOMINATING!
+    d.insert_into_db(id=row_id, input_graph=dict_graph, input_matrix=matrix_graph, bin_of_edges=b)
     return b, node_count
 
 
 def set_up_preset(matrix_graph):
+    global row_id
     node_count = len(matrix_graph)
     dict_graph = op.to_dict(matrix_graph)
     b = generate_bin_of_edges(dict_graph, matrix_graph)
+    d.insert_into_db(id=row_id, input_graph=dict_graph, input_matrix=matrix_graph, bin_of_edges=b)
+    #b = op.convert_directed_to_undirected(b)  # DOMINATING!
     return b, node_count
 
 
 def get_known_incompatible(bin_of_edges):
     return {i: op.nodes_incompatible_with_dict(i, bin_of_edges) for i in bin_of_edges.keys()}
 
-
 if __name__ == '__main__':
+    #for i in range(100):
+    # d.create_database()
     start = time.time()
-    #b, n_count = set_up_random(100)
-    b, n_count = set_up_preset(ex.graph_II)
-    logger.info('bin of nodes: %s' % b)
+    row_id = d.get_next_id_from_db()
+    bin_of_edges, n_count = set_up_random(100)
+    #bin_of_edges, n_count = set_up_preset(ex.graph_II)
+    # logger.info('bin of nodes: %s' % bin_of_edges)
+    # logger.info('We got %s nodes. Entire list is: %s' % (len(bin_of_edges.keys()), bin_of_edges.keys()))
 
-    known_incompatible_nodes = get_known_incompatible(b)
-    logger.info('dict of inc nodes: %s' % known_incompatible_nodes)
+    known_incompatible_nodes = get_known_incompatible(bin_of_edges)
+    # logger.info('known incompatible nodes : %s' % known_incompatible_nodes)
 
-    execute_algo(b, n_count)
+    execute_algo(bin_of_edges, n_count)
     logger.info('Execution time: %s' % str(time.time() - start))
+    d.insert_into_db(row_id, running_time=str(time.time() - start), known_incompatible_nodes=known_incompatible_nodes)
     # logger.info('cnt of inc nodes %s' % cnt_inc_nodes)
     # main()
