@@ -2,6 +2,7 @@ import sqlite3
 
 
 def insert_into_db(id,
+                   number_of_nodes=None,
                    input_graph=None,
                    input_matrix=None,
                    inhibited_edges=None,
@@ -22,6 +23,8 @@ def insert_into_db(id,
     if not is_id_in_db(id):
         c.execute("INSERT INTO inhibition(id) VALUES (?)", [id])
 
+    if number_of_nodes:
+        c.execute("UPDATE inhibition SET number_of_nodes = ? WHERE id = ?", [str(number_of_nodes), id])
     if input_graph:
         c.execute("UPDATE inhibition SET input_graph = ? WHERE id = ?", [str(input_graph), id])
     if input_matrix:
@@ -63,6 +66,7 @@ def create_database():
     c.execute('''CREATE TABLE inhibition
                  (
                  id INTEGER,
+                 number_of_nodes TEXT,
                  input_graph TEXT,
                  input_matrix TEXT,
                  inhibited_edges TEXT,
@@ -83,7 +87,7 @@ def create_database():
 
 
 def acquire_connection_to_db():
-    return sqlite3.connect('D:\Dropbox\PyCharm_projects\inhibitor_graph_v1.1\inhibition.db')
+    return sqlite3.connect('/Users/vstashkov/PycharmProjects/learning/inhibitor/inhibition.db')
 
 
 def get_next_id_from_db():

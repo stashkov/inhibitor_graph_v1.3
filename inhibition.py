@@ -5,9 +5,10 @@ import copy
 import itertools
 import logging
 import time
-from multiprocessing import Process, Manager, cpu_count, current_process
+from multiprocessing import Process, Manager, cpu_count
 import example_graphs as ex
 import db_functions as d
+import draw_graph as dg
 
 NUMBER_OF_ALLOWED_PROCESSES = cpu_count() - 1
 logger = logging.getLogger(__name__)
@@ -190,11 +191,11 @@ def execute_algo(b, node_count):
         p.start()
 
         while len([1 for j in jobs if j.is_alive() == True]) >= NUMBER_OF_ALLOWED_PROCESSES:
-            time.sleep(.5)
+            time.sleep(.1)
     while any([j.is_alive() for j in jobs]):
         logger.debug([j for j in jobs if j.is_alive() == True])
         logger.info('Processes completed %s out of %s' % (len([j for j in jobs if j.is_alive() == False]), len(b.keys())))
-        time.sleep(1)
+        time.sleep(.1)
     p.join()
 
     # logger.info('Processes completed %s out of %s' % (len([j for j in jobs if j.is_alive() == False]), len(b.keys())))
@@ -207,9 +208,9 @@ def execute_algo(b, node_count):
     return result
 
 
-def set_up_random(num_of_nodes):
-    dict_graph, matrix_graph = generate_graph(num_of_nodes)
-    node_count = num_of_nodes
+def set_up_random(node_count):
+    dict_graph, matrix_graph = generate_graph(node_count)
+    dg.draw_graph(matrix_graph)
     b = generate_bin_of_edges(dict_graph, matrix_graph)
     b = op.convert_directed_to_undirected(b)  # DOMINATING!
     d.insert_into_db(id=row_id, input_graph=dict_graph, input_matrix=matrix_graph, bin_of_edges=b)
@@ -217,12 +218,13 @@ def set_up_random(num_of_nodes):
 
 
 def set_up_preset(matrix_graph):
+    dg.draw_graph(matrix_graph)
     global row_id
     node_count = len(matrix_graph)
     dict_graph = op.to_dict(matrix_graph)
     b = generate_bin_of_edges(dict_graph, matrix_graph)
     d.insert_into_db(id=row_id, input_graph=dict_graph, input_matrix=matrix_graph, bin_of_edges=b)
-    #b = op.convert_directed_to_undirected(b)  # DOMINATING!
+    b = op.convert_directed_to_undirected(b)  # DOMINATING!
     return b, node_count
 
 
@@ -230,20 +232,29 @@ def get_known_incompatible(bin_of_edges):
     return {i: op.nodes_incompatible_with_dict(i, bin_of_edges) for i in bin_of_edges.keys()}
 
 if __name__ == '__main__':
-    #for i in range(100):
-    # d.create_database()
+    number_of_nodes = 3
+    #for number_of_nodes in [20, 50, 75, 100]:
+    #    for i in range(10):
+            #d.create_database()
     start = time.time()
     row_id = d.get_next_id_from_db()
-    bin_of_edges, n_count = set_up_random(100)
-    #bin_of_edges, n_count = set_up_preset(ex.graph_II)
-    # logger.info('bin of nodes: %s' % bin_of_edges)
+    #bin_of_edges, n_count = set_up_random(number_of_nodes)
+    bin_of_edges, n_count = set_up_preset(ex.graph_II)
+    logger.info('bin of nodes: %s' % bin_of_edges)
     # logger.info('We got %s nodes. Entire list is: %s' % (len(bin_of_edges.keys()), bin_of_edges.keys()))
 
     known_incompatible_nodes = get_known_incompatible(bin_of_edges)
     # logger.info('known incompatible nodes : %s' % known_incompatible_nodes)
 
-    execute_algo(bin_of_edges, n_count)
+    result = execute_algo(bin_of_edges, n_count)
     logger.info('Execution time: %s' % str(time.time() - start))
-    d.insert_into_db(row_id, running_time=str(time.time() - start), known_incompatible_nodes=known_incompatible_nodes)
+    d.insert_into_db(row_id,
+                     number_of_nodes=number_of_nodes,
+                     running_time=str(time.time() - start),
+                     known_incompatible_nodes=known_incompatible_nodes)
     # logger.info('cnt of inc nodes %s' % cnt_inc_nodes)
     # main()
+
+    #for r in result:
+    #    m = op.to_adj_matrix(r)
+    #    dg.draw_graph(m, sorted(r.keys()))
