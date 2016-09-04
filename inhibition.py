@@ -9,6 +9,7 @@ from multiprocessing import Process, Manager, cpu_count
 import example_graphs as ex
 import db_functions as d
 import draw_graph as dg
+import one_time_draw_graph as one_time
 
 NUMBER_OF_ALLOWED_PROCESSES = cpu_count() - 1
 logger = logging.getLogger(__name__)
@@ -204,7 +205,6 @@ def execute_algo(b, node_count):
 
 def set_up_random(node_count):
     dict_graph, matrix_graph = generate_graph(node_count)
-    dg.draw_graph(matrix_graph)
     b = generate_bin_of_edges(dict_graph, matrix_graph)
     b = op.convert_directed_to_undirected(b)  # DOMINATING!
     add_input_graph_info_to_db(dict_graph, matrix_graph, b)
@@ -212,7 +212,6 @@ def set_up_random(node_count):
 
 
 def set_up_preset(matrix_graph):
-    dg.draw_graph(matrix_graph)
     node_count = len(matrix_graph)
     dict_graph = op.to_dict(matrix_graph)
     b = generate_bin_of_edges(dict_graph, matrix_graph)
@@ -222,7 +221,7 @@ def set_up_preset(matrix_graph):
 
 
 def add_input_graph_info_to_db(dict_graph, matrix_graph, bin_of_edges):
-    row_id = d.get_max_id_from_db()
+    row_id = d.get_max_id_from_db() + 1
     in_degree, out_degree, \
         inhibited_edges, inhibition_degree, \
         inhibited_vertices, non_inhibited_vertices = get_graph_stats(dict_graph, matrix_graph)
@@ -244,13 +243,13 @@ def get_known_incompatible(bin_of_edges):
 
 if __name__ == '__main__':
     d.if_not_exists_create_database()
-    number_of_nodes = 3
+    number_of_nodes = 7
     #for number_of_nodes in [20, 50, 75, 100]:
-    #    for i in range(10):
+    #    for i in range(1):
     start = time.time()
     row_id = d.get_max_id_from_db() + 1
-    #bin_of_edges, n_count = set_up_random(number_of_nodes)
-    bin_of_edges, n_count = set_up_preset(ex.graph_II)
+    bin_of_edges, n_count = set_up_random(number_of_nodes)
+    #bin_of_edges, n_count = set_up_preset(ex.graph_II)
     logger.info('bin of nodes: %s' % bin_of_edges)
     # logger.info('We got %s nodes. Entire list is: %s' % (len(bin_of_edges.keys()), bin_of_edges.keys()))
 
@@ -265,7 +264,5 @@ if __name__ == '__main__':
                      known_incompatible_nodes=known_incompatible_nodes)
     # logger.info('cnt of inc nodes %s' % cnt_inc_nodes)
     # main()
-
-    #for r in result:
-    #    m = op.to_adj_matrix(r)
-    #    dg.draw_graph(m, sorted(r.keys()))
+    one_time.draw_graph_for_every_input_matrix(row_id)
+    one_time.draw_graph_for_every_non_empty_result(row_id)

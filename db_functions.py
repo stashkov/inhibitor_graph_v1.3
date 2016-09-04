@@ -93,7 +93,7 @@ def get_max_id_from_db():
         c.execute('''select max(id) from inhibition''')
         max_id = c.fetchone()
     if max_id[0] is None:
-        return 1
+        return 0
     else:
         return max_id[0]
 

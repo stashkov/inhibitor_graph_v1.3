@@ -56,11 +56,11 @@ def generate_adj_matrix(vertices, inhibition_degree=2):
                 if row.count(-1) + row.count(1) >= 2 and row.count(-1) != 0:
                     matrix[i][j] = 0
                 elif row.count(-1) == 1:
-                    matrix[i][j] = rnd.choice([-1, 1, 0])
+                    matrix[i][j] = rnd.choice([-1, 1, 0] + [0]*10 + [1]*2)
                 elif row.count(-1) == 2:
                     matrix[i][j] = 0
                 else:
-                    matrix[i][j] = rnd.choice([-1, 1, 0])
+                    matrix[i][j] = rnd.choice([-1, 1, 0] + [0]*10 + [1]*2)
     matrix = [list(i) for i in zip(*matrix)]
     return matrix
 
@@ -80,7 +80,6 @@ def to_dict(adj_matrix):
 def to_adj_matrix(d):
     """convert graph from dict to adj matrix"""
     all_nodes = sorted(d.keys())
-    # TODO if set(d.values()) != set(d.keys()) then add empty nodes e.g. {2:[]}
     m = []
     for v in all_nodes:
         if v in d.keys():
@@ -177,9 +176,14 @@ def convert_directed_to_undirected(d):
     return undirected_d
 
 
-def convert_undirected_to_directed(graph):
-    graph = {'1F2T': ['3T'], '3T': ['1F2T']}
-    helper = {'1': ['3'], '3': [], '2': ['3']}
+def convert_undirected_to_directed(graph, helper):
+    for k, v in helper.iteritems():
+        if not v:
+            if k + 'T' in graph.keys():
+                graph[k + 'T'] = []
+            else:
+                graph[k + 'F'] = []
+    return graph
 
 
 def get_number_of_nodes(d):

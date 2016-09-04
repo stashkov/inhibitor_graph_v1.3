@@ -1,3 +1,4 @@
+import unittest
 from unittest import TestCase
 from collections import defaultdict
 
@@ -382,10 +383,6 @@ class TestTo_adj_matrix(TestCase):
         g = {'1': ['3'], '2': ['3'], '3': []}
         self.assertEqual(op.to_adj_matrix(g), [[0, 0, 1], [0, 0, 1], [0, 0, 0]])
 
-        # def test_to_adj_matrix_else_case(self):
-        #     g = {'1': ['3'], '2': ['3']}
-        #     self.assertEqual(op.to_adj_matrix(g), [[0, 0, 1], [0, 0, 1], [0, 0, 0]])
-
 
 class Testget_number_of_nodes(TestCase):
     def test_get_number_of_nodes(self):
@@ -535,12 +532,34 @@ class TestRecursive_teardown(TestCase):
 
 
 class TestConvert_undirected_to_directed(TestCase):
-    def test_3_node_graph(self):
-        helper = {'1': ['3'], '3': [], '2': ['3']}
-        # [{'2F': ['3F'], '1T': ['3F'], '3F': ['1T', '2F']},
-        #  {'2T': ['3T'], '1F': ['3T'], '3T': ['2T', '1F']},
-        #  {'3F': ['1T2F'], '1T2F': ['3F']},
-        #  {'1F2T': ['3T'], '3T': ['1F2T']}]
-        given = {'1F2T': ['3T'], '3T': ['1F2T']}
+    def setUp(self):
+        self.initial_example_II = {'1': ['3'], '3': [], '2': ['3']}
+        self.initial_2_node = {'1': ['2'], '2': []}
+
+    def tearDown(self):
+        del self.initial_example_II
+
+    def test_example_II_1(self):
+        graph = {'1F2T': ['3T'], '3T': ['1F2T']}
         result = {'1F2T': ['3T'], '3T': []}
-        self.assertEqual(i.convert_undirected_to_directed(given), result)
+        self.assertEqual(op.convert_undirected_to_directed(graph, self.initial_example_II), result)
+
+    def test_example_II_2(self):
+        graph = {'2F': ['3F'], '1T': ['3F'], '3F': ['1T', '2F']}
+        result = {'2F': ['3F'], '1T': ['3F'], '3F': []}
+        self.assertEqual(op.convert_undirected_to_directed(graph, self.initial_example_II), result)
+
+    def test_example_II_3(self):
+        graph = {'2T': ['3T'], '1F': ['3T'], '3T': ['2T', '1F']}
+        result = {'2T': ['3T'], '1F': ['3T'], '3T': []}
+        self.assertEqual(op.convert_undirected_to_directed(graph, self.initial_example_II), result)
+
+    def test_example_II_4(self):
+        graph = {'3F': ['1T2F'], '1T2F': ['3F']}
+        result = {'3F': [], '1T2F': ['3F']}
+        self.assertEqual(op.convert_undirected_to_directed(graph, self.initial_example_II), result)
+
+    def test_2_node(self):
+        graph = {'1T': ['2T'], '2T': ['1F']}
+        result = {'1T':['2T'], '2T': []}
+        self.assertEqual(op.convert_undirected_to_directed(graph, self.initial_2_node), result)
