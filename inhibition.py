@@ -46,12 +46,12 @@ def get_graph_stats(dict_graph, matrix_graph):
     non_inhibited_vertices = list(set(dict_graph.keys()) - inhibited_vertices)
 
     global row_id
-    d.insert_into_db(id=row_id, in_degree=in_degree,
-                   out_degree=out_degree,
-                   inhibited_edges=inhibited_edges,
-                   inhibition_degree=inhibition_degree,
-                   inhibited_vertices=inhibited_vertices,
-                   non_inhibited_vertices=non_inhibited_vertices)
+    d.insert_into_db(row_id=row_id, in_degree=in_degree,
+                     out_degree=out_degree,
+                     inhibited_edges=inhibited_edges,
+                     inhibition_degree=inhibition_degree,
+                     inhibited_vertices=inhibited_vertices,
+                     non_inhibited_vertices=non_inhibited_vertices)
 
     logger.info('input graph --------------->%s' % dict_graph)
     logger.debug('in degree for each node --->%s' % in_degree)
@@ -213,7 +213,7 @@ def set_up_random(node_count):
     dg.draw_graph(matrix_graph)
     b = generate_bin_of_edges(dict_graph, matrix_graph)
     b = op.convert_directed_to_undirected(b)  # DOMINATING!
-    d.insert_into_db(id=row_id, input_graph=dict_graph, input_matrix=matrix_graph, bin_of_edges=b)
+    d.insert_into_db(row_id=row_id, input_graph=dict_graph, input_matrix=matrix_graph, bin_of_edges=b)
     return b, node_count
 
 
@@ -223,7 +223,7 @@ def set_up_preset(matrix_graph):
     node_count = len(matrix_graph)
     dict_graph = op.to_dict(matrix_graph)
     b = generate_bin_of_edges(dict_graph, matrix_graph)
-    d.insert_into_db(id=row_id, input_graph=dict_graph, input_matrix=matrix_graph, bin_of_edges=b)
+    d.insert_into_db(row_id=row_id, input_graph=dict_graph, input_matrix=matrix_graph, bin_of_edges=b)
     b = op.convert_directed_to_undirected(b)  # DOMINATING!
     return b, node_count
 
@@ -232,10 +232,10 @@ def get_known_incompatible(bin_of_edges):
     return {i: op.nodes_incompatible_with_dict(i, bin_of_edges) for i in bin_of_edges.keys()}
 
 if __name__ == '__main__':
+    d.if_not_exists_create_database()
     number_of_nodes = 3
     #for number_of_nodes in [20, 50, 75, 100]:
     #    for i in range(10):
-            #d.create_database()
     start = time.time()
     row_id = d.get_next_id_from_db()
     #bin_of_edges, n_count = set_up_random(number_of_nodes)
