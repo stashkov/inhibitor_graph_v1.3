@@ -502,7 +502,6 @@ class TestRecursive_teardown(TestCase):
             i.recursive_teardown(node, d, node_count, result, not_feasible, pre_inc_nodes, recursion_level=0),
             None)
 
-
     def test_recursive_teardown_return_disconnected(self):
         # this dict is compatible with itself but is disconnected
         node = '1T'
@@ -514,7 +513,6 @@ class TestRecursive_teardown(TestCase):
         self.assertEqual(
             i.recursive_teardown(node, d, node_count, result, not_feasible, pre_inc_nodes, recursion_level=0),
             None)
-
 
     def test_recursive_teardown_return_not_feasible(self):
         # this dict is compatible with itself but is disconnected
@@ -528,10 +526,21 @@ class TestRecursive_teardown(TestCase):
             i.recursive_teardown(node, d, node_count, result, not_feasible, pre_inc_nodes, recursion_level=0),
             None)
 
+# class TestSet_up_preset(TestCase):
+#     def test_set_up_preset(self):
+#         correct_answer = (
+#             {'2T': ['3T'], '1T': ['3F'], '1F2T': ['3T'], '3T': [],
+#              '1F': ['3T'], '2F': ['3F'], '1T2F': ['3F'], '3F': []}, 3)
+#         self.assertEqual(i.set_up_preset(ex.graph_II), correct_answer)
 
-class TestSet_up_preset(TestCase):
-    def test_set_up_preset(self):
-        correct_answer = (
-            {'2T': ['3T'], '1T': ['3F'], '1F2T': ['3T'], '3T': [],
-             '1F': ['3T'], '2F': ['3F'], '1T2F': ['3F'], '3F': []}, 3)
-        self.assertEqual(i.set_up_preset(ex.graph_II), correct_answer)
+
+class TestConvert_undirected_to_directed(TestCase):
+    def test_3_node_graph(self):
+        helper = {'1': ['3'], '3': [], '2': ['3']}
+        # [{'2F': ['3F'], '1T': ['3F'], '3F': ['1T', '2F']},
+        #  {'2T': ['3T'], '1F': ['3T'], '3T': ['2T', '1F']},
+        #  {'3F': ['1T2F'], '1T2F': ['3F']},
+        #  {'1F2T': ['3T'], '3T': ['1F2T']}]
+        given = {'1F2T': ['3T'], '3T': ['1F2T']}
+        result = {'1F2T': ['3T'], '3T': []}
+        self.assertEqual(i.convert_undirected_to_directed(given), result)

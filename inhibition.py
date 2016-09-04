@@ -45,14 +45,6 @@ def get_graph_stats(dict_graph, matrix_graph):
     inhibited_vertices = set([edge[1] for edge in inhibited_edges])
     non_inhibited_vertices = list(set(dict_graph.keys()) - inhibited_vertices)
 
-    global row_id
-    d.insert_into_db(row_id=row_id, in_degree=in_degree,
-                     out_degree=out_degree,
-                     inhibited_edges=inhibited_edges,
-                     inhibition_degree=inhibition_degree,
-                     inhibited_vertices=inhibited_vertices,
-                     non_inhibited_vertices=non_inhibited_vertices)
-
     logger.info('input graph --------------->%s' % dict_graph)
     logger.debug('in degree for each node --->%s' % in_degree)
     logger.debug('out degree for each node -->%s' % out_degree)
@@ -204,7 +196,9 @@ def execute_algo(b, node_count):
     logger.info('results are:\n%s' % result)
     logger.info('number of results: %s' % len(result))
     global row_id
-    d.insert_into_db(row_id, not_feasible=not_feasible, results=result, number_of_results=len(result))
+    d.insert_into_db(row_id,
+                     number_of_not_feasible=len(not_feasible),
+                     results=result, number_of_results=len(result))
     return result
 
 
@@ -213,23 +207,40 @@ def set_up_random(node_count):
     dg.draw_graph(matrix_graph)
     b = generate_bin_of_edges(dict_graph, matrix_graph)
     b = op.convert_directed_to_undirected(b)  # DOMINATING!
-    d.insert_into_db(row_id=row_id, input_graph=dict_graph, input_matrix=matrix_graph, bin_of_edges=b)
+    add_input_graph_info_to_db(dict_graph, matrix_graph, b)
     return b, node_count
 
 
 def set_up_preset(matrix_graph):
     dg.draw_graph(matrix_graph)
-    global row_id
     node_count = len(matrix_graph)
     dict_graph = op.to_dict(matrix_graph)
     b = generate_bin_of_edges(dict_graph, matrix_graph)
-    d.insert_into_db(row_id=row_id, input_graph=dict_graph, input_matrix=matrix_graph, bin_of_edges=b)
     b = op.convert_directed_to_undirected(b)  # DOMINATING!
+    add_input_graph_info_to_db(dict_graph, matrix_graph, b)
     return b, node_count
+
+
+def add_input_graph_info_to_db(dict_graph, matrix_graph, bin_of_edges):
+    row_id = d.get_max_id_from_db()
+    in_degree, out_degree, \
+        inhibited_edges, inhibition_degree, \
+        inhibited_vertices, non_inhibited_vertices = get_graph_stats(dict_graph, matrix_graph)
+    d.insert_into_db(row_id=row_id,
+                     input_graph=dict_graph,
+                     input_matrix=matrix_graph,
+                     bin_of_edges=bin_of_edges,
+                     in_degree=in_degree,
+                     out_degree=out_degree,
+                     inhibited_edges=inhibited_edges,
+                     inhibition_degree=inhibition_degree,
+                     inhibited_vertices=inhibited_vertices,
+                     non_inhibited_vertices=non_inhibited_vertices)
 
 
 def get_known_incompatible(bin_of_edges):
     return {i: op.nodes_incompatible_with_dict(i, bin_of_edges) for i in bin_of_edges.keys()}
+
 
 if __name__ == '__main__':
     d.if_not_exists_create_database()
@@ -237,7 +248,7 @@ if __name__ == '__main__':
     #for number_of_nodes in [20, 50, 75, 100]:
     #    for i in range(10):
     start = time.time()
-    row_id = d.get_next_id_from_db()
+    row_id = d.get_max_id_from_db() + 1
     #bin_of_edges, n_count = set_up_random(number_of_nodes)
     bin_of_edges, n_count = set_up_preset(ex.graph_II)
     logger.info('bin of nodes: %s' % bin_of_edges)

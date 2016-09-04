@@ -177,6 +177,11 @@ def convert_directed_to_undirected(d):
     return undirected_d
 
 
+def convert_undirected_to_directed(graph):
+    graph = {'1F2T': ['3T'], '3T': ['1F2T']}
+    helper = {'1': ['3'], '3': [], '2': ['3']}
+
+
 def get_number_of_nodes(d):
     l = [split_composite_node(i) for i in d.keys()]
     return len({i[:-1] for i in itertools.chain.from_iterable(l)})

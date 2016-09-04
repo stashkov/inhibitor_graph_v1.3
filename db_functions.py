@@ -4,11 +4,11 @@ import platform
 
 
 if platform.system() == 'Windows':
-    path_to_db = 'D:\Dropbox\PyCharm_projects\inhibitor_graph_v1.1\inhibition.db'
-    path_to_schema = 'D:\Dropbox\PyCharm_projects\inhibitor_graph_v1.1\sql\create_schema.sql'
+    path_to_db = r'D:/Dropbox/PyCharm_projects/inhibitor_graph_v1.1/inhibition.db'
+    path_to_schema = r'D:/Dropbox/PyCharm_projects/inhibitor_graph_v1.1/sql/create_schema.sql'
 else:
-    path_to_db = '/Users/vstashkov/PycharmProjects/learning/inhibitor/inhibition.db'
-    path_to_schema = '/Users/vstashkov/PycharmProjects/learning/inhibitor/sql/create_schema.sql'
+    path_to_db = r'/Users/vstashkov/PycharmProjects/learning/inhibitor/inhibition.db'
+    path_to_schema = r'/Users/vstashkov/PycharmProjects/learning/inhibitor/sql/create_schema.sql'
 
 
 def insert_into_db(row_id,
@@ -23,7 +23,7 @@ def insert_into_db(row_id,
                    non_inhibited_vertices=None,
                    known_incompatible_nodes=None,
                    bin_of_edges=None,
-                   not_feasible=None,
+                   number_of_not_feasible=None,
                    results=None,
                    number_of_results=None,
                    running_time=None):
@@ -56,8 +56,8 @@ def insert_into_db(row_id,
                   [str(known_incompatible_nodes), row_id])
     if bin_of_edges:
         c.execute("UPDATE inhibition SET bin_of_edges = ? WHERE id = ?", [str(bin_of_edges), row_id])
-    if not_feasible:
-        c.execute("UPDATE inhibition SET not_feasible = ? WHERE id = ?", [str(not_feasible), row_id])
+    if number_of_not_feasible:
+        c.execute("UPDATE inhibition SET number_of_not_feasible = ? WHERE id = ?", [str(number_of_not_feasible), row_id])
     if results:
         c.execute("UPDATE inhibition SET results = ? WHERE id = ?", [str(results), row_id])
     if number_of_results:
@@ -73,12 +73,11 @@ def if_not_exists_create_database():
     global path_to_schema
     global path_to_db
     db_is_new = not os.path.exists(path_to_db)
-    path_to_schema = ''
     with connect_to_db() as conn:
         if db_is_new:
-            with open(path_to_schema, 'rt') as f:
+            with open(path_to_schema, 'r') as f:
                 schema = f.read()
-            conn.executescript(schema)
+            conn.execute(schema)
         else:
             pass
 
@@ -88,7 +87,7 @@ def connect_to_db():
     return sqlite3.connect(path_to_db)
 
 
-def get_next_id_from_db():
+def get_max_id_from_db():
     with connect_to_db() as conn:
         c = conn.cursor()
         c.execute('''select max(id) from inhibition''')
@@ -96,7 +95,7 @@ def get_next_id_from_db():
     if max_id[0] is None:
         return 1
     else:
-        return max_id[0] + 1
+        return max_id[0]
 
 
 def is_id_in_db(row_id):

@@ -3,12 +3,12 @@ import numpy as np
 import string
 import matplotlib.pyplot as plt
 import random
+import os
 
 
-def draw_graph(adjacency_matrix, vertices=''):
+def draw_graph(adjacency_matrix, vertices='', name='img_1'):
     matrix = np.matrix(adjacency_matrix)
     graph = nx.from_numpy_matrix(matrix, create_using=nx.DiGraph())
-    # print matrix
     if vertices == '':
         # vertices = list(string.ascii_uppercase[0:len(adjacency_matrix)])
         vertices = range(len(adjacency_matrix))
@@ -28,8 +28,7 @@ def draw_graph(adjacency_matrix, vertices=''):
             width=width,
             node_color=node_color)
     # plt.show()
-    name = random.choice(range(100000))
-    plt.savefig(str(name) + '.png')
+    plt.savefig(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'images/') + str(name) + '.png')
     plt.clf()
     return
 

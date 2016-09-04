@@ -1,8 +1,7 @@
-DROP TABLE inhibition;
 CREATE TABLE inhibition
 (
   id INTEGER,
-  number_of_nodes TEXT,
+  number_of_nodes INT,
   input_graph TEXT,
   input_matrix TEXT,
   inhibited_edges TEXT,
@@ -12,9 +11,10 @@ CREATE TABLE inhibition
   inhibited_vertices TEXT,
   non_inhibited_vertices TEXT,
   known_incompatible_nodes TEXT,
+  number_of_not_feasible INT,
   bin_of_edges TEXT,
-  not_feasible TEXT,
   results TEXT,
   number_of_results INT,
   running_time REAL
 );
+
