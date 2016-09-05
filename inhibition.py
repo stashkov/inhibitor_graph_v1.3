@@ -11,6 +11,8 @@ import db_functions as d
 import draw_graph as dg
 import one_time_draw_graph as one_time
 
+
+
 NUMBER_OF_ALLOWED_PROCESSES = cpu_count() - 1
 logger = logging.getLogger(__name__)
 #logging.basicConfig(level=logging.INFO, filename='hello.log')

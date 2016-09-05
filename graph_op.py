@@ -1,55 +1,12 @@
 import re
 import itertools
-import copy
-
-
-def out_degree(adj_matrix):
-    vertices = range(1, len(adj_matrix) + 1)
-    vertices = [str(i) for i in vertices]
-    dict_out_degree = {i: 0 for i in vertices}
-    row_number = 0
-    for row in adj_matrix:
-        for value in row:
-            if abs(value) == 1:
-                dict_out_degree[vertices[row_number]] += 1
-        row_number += 1
-    return dict_out_degree
-
-
-def in_degree(adj_matrix):
-    vertices = range(1, len(adj_matrix) + 1)
-    vertices = [str(i) for i in vertices]
-    dict_in_degree = {i: 0 for i in vertices}
-    adjacency_matrix_transpose = [list(i) for i in zip(*adj_matrix)]
-    row_number = 0
-    for row in adjacency_matrix_transpose:
-        for value in row:
-            if abs(value) == 1:
-                dict_in_degree[vertices[row_number]] += 1
-        row_number += 1
-    return dict_in_degree
-
-
-def inhibited_edges(adj_matrix):
-    """get list of inhibited edges [(A,B), (C,D)]
-    and dict of inhibited degrees {B:1, D:1}"""
-    vertices = range(1, len(adj_matrix) + 1)
-    vertices = [str(i) for i in vertices]
-    inh_edges = []
-    inh_degree_dict = {}
-    for i in range(len(adj_matrix)):
-        for j in range(len(adj_matrix)):
-            if adj_matrix[i][j] == -1:
-                inh_edges.append((vertices[i], vertices[j]))
-                inh_degree_dict[vertices[j]] = inh_degree_dict.get(vertices[j], 0) + 1
-    return inh_edges, inh_degree_dict
 
 
 def generate_adj_matrix(vertices, inhibition_degree=2):
     """generate square matrix with max inihigibiton degree
     currently several restrictions are in place, they need to be lifted later"""
     import random as rnd
-    matrix = [[0 for x in range(vertices)] for y in range(vertices)]
+    matrix = [[0 for _ in xrange(vertices)] for _ in xrange(vertices)]
     for i, row in enumerate(matrix):
         for j, element in enumerate(row):
             if i > j:
@@ -63,28 +20,6 @@ def generate_adj_matrix(vertices, inhibition_degree=2):
                     matrix[i][j] = rnd.choice([-1, 1, 0] + [0]*10 + [1]*2)
     matrix = [list(i) for i in zip(*matrix)]
     return matrix
-
-
-def to_dict(adj_matrix):
-    """convert graph from adj matrix to dict"""
-    vertices = range(1, len(adj_matrix) + 1)
-    vertices = [str(i) for i in vertices]
-    graph_dict = {i: [] for i in vertices}
-    for i in range(len(adj_matrix)):
-        for j in range(len(adj_matrix)):
-            if abs(adj_matrix[i][j]) == 1:
-                graph_dict[vertices[i]].append(vertices[j])
-    return graph_dict
-
-
-def to_adj_matrix(d):
-    """convert graph from dict to adj matrix"""
-    all_nodes = sorted(d.keys())
-    m = []
-    for v in all_nodes:
-        if v in d.keys():
-            m.append([1 if e in d[v] else 0 for e in all_nodes])
-    return m
 
 
 def swap_true_and_false(nodes):
@@ -164,18 +99,6 @@ def get_nodes_incompatible_inside_dict(d):
     return list(res)
 
 
-def is_connected(d):
-    return set(d.keys()) == set(_plain_bfs(convert_directed_to_undirected(d), d.keys()[0]))
-
-
-def convert_directed_to_undirected(d):
-    undirected_d = copy.deepcopy(d)
-    for key, value in d.iteritems():
-        for i in value:
-            undirected_d[i].append(key)
-    return undirected_d
-
-
 def convert_undirected_to_directed(graph, helper):
     for k, v in helper.iteritems():
         if not v:
@@ -191,17 +114,5 @@ def get_number_of_nodes(d):
     return len({i[:-1] for i in itertools.chain.from_iterable(l)})
 
 
-def _plain_bfs(G, source):
-    """A fast BFS node generator"""
-    seen = set()
-    nextlevel = {source}
-    while nextlevel:
-        thislevel = nextlevel
-        nextlevel = set()
-        for v in thislevel:
-            if v not in seen:
-                yield v
-                seen.add(v)
-                nextlevel.update(G[v])
 
 

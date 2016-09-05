@@ -9,9 +9,8 @@ import os
 def draw_graph(adjacency_matrix, vertices='', name='img_1'):
     matrix = np.matrix(adjacency_matrix)
     graph = nx.from_numpy_matrix(matrix, create_using=nx.DiGraph())
-    if vertices == '':
-        # vertices = list(string.ascii_uppercase[0:len(adjacency_matrix)])
-        vertices = range(1, len(adjacency_matrix) + 1)
+    if not vertices:
+        vertices = xrange(1, len(adjacency_matrix) + 1)
     labels = {i: vertex for (i, vertex) in enumerate(vertices)}
 
     edge_color = ['b' if x == 1 else 'r' for row in adjacency_matrix for x in row if x in [-1, 1]]
