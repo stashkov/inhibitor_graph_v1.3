@@ -1,8 +1,6 @@
 import networkx as nx
 import numpy as np
-import string
 import matplotlib.pyplot as plt
-import random
 import os
 
 

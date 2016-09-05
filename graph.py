@@ -13,6 +13,7 @@ class Graph(object):
         self.connected = Graph.is_connected(self.dict_graph)
         self.inhibited_vertices = set([edge[1] for edge in self.inhibited_edges])
         self.non_inhibited_vertices = list(set(self.dict_graph.keys()) - self.inhibited_vertices)
+        self.number_of_nodes = len(self.matrix_graph)
 
     @staticmethod
     def to_dict(matrix_graph):

@@ -59,7 +59,7 @@ def incompatible_nodes(node):
 
 def nodes_incompatible_with_dict(node, d):
     """
-    given dict d and a node, generate all incompatible, with that node, nodes
+    given dict dbfunc and a node, generate all incompatible, with that node, nodes
     for a node '123F' incompatible nodes are '123T', '123F5T', '123T7T'
     for a node '1F2T' incompatible nodes are '1F', '2T', '1T2F', '1F2T99F', '1T2T'
     summary: given a node, incompatible nodes are those

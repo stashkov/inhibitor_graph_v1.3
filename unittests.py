@@ -453,7 +453,7 @@ class TestGenerate_bin_of_edges(TestCase):
 #                           '2F': ['3F'], '1T': ['3F'], '3F': [],
 #                           '1F2T': ['3T'], '3T': [],
 #                           '3F': [], '1T2F': ['3F']}
-#         self.assertEqual(i.execute_algo(b, node_count), correct_answer)
+#         self.assertEqual(i.process_parallel(b, node_count), correct_answer)
 
 
 class TestAdd_to_not_feasible(TestCase):
@@ -461,7 +461,7 @@ class TestAdd_to_not_feasible(TestCase):
         d = {'1T': ['2T'], '2F': []}
         nf = [[], [], []]
         correct_answer = [[], [], [{'2F': [], '1T': ['2T']}]]
-        self.assertEqual(i.add_to_not_feasible(d, nf), correct_answer)
+        self.assertEqual(i.add_to_list_of_not_feasible_dicts(d, nf), correct_answer)
 
 
 class TestRecursive_teardown(TestCase):
