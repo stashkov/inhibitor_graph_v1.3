@@ -1,5 +1,4 @@
 import graph_op as op
-import rule as r
 from collections import defaultdict
 import copy
 import itertools
@@ -10,6 +9,8 @@ import example_graphs as ex
 import db_functions as d
 import draw_graph as dg
 import one_time_draw_graph as one_time
+import graph as g
+import bin_of_edges as b
 
 
 
@@ -19,89 +20,7 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 
-# create a file handler
-# handler = logging.FileHandler('hello.log')
-# handler.setLevel(logging.DEBUG)
-#
-# # create a logging format
-# formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-# handler.setFormatter(formatter)
-#
-# # add the handlers to the logger
-# logger.addHandler(handler)
-
-
-def generate_graph(n_of_nodes):
-    flag = False
-    while not flag:
-        m = op.generate_adj_matrix(n_of_nodes)
-        g = op.to_dict(m)
-        flag = op.is_connected(g)
-    return g, m
-
-
-def get_graph_stats(dict_graph, matrix_graph):
-    in_degree = op.in_degree(matrix_graph)
-    out_degree = op.out_degree(matrix_graph)
-    inhibited_edges, inhibition_degree = op.inhibited_edges(matrix_graph)
-
-    inhibited_vertices = set([edge[1] for edge in inhibited_edges])
-    non_inhibited_vertices = list(set(dict_graph.keys()) - inhibited_vertices)
-
-    logger.info('input graph --------------->%s' % dict_graph)
-    logger.debug('in degree for each node --->%s' % in_degree)
-    logger.debug('out degree for each node -->%s' % out_degree)
-    logger.info('inhibited edges ----------->%s' % inhibited_edges)
-    logger.debug('number of inhibited edges going into a node -->%s' % inhibition_degree)
-    logger.debug('non inhibited vertices ---->%s' % non_inhibited_vertices)
-    return in_degree, out_degree, inhibited_edges, inhibition_degree, inhibited_vertices, non_inhibited_vertices
-
-
-def generate_bin_of_edges(g, m):
-    in_degree, out_degree, \
-        inhibited_edges, inhibition_degree, \
-        inhibited_vertices, non_inhibited_vertices = get_graph_stats(g, m)
-
-    bin_of_edges = defaultdict(set)
-    for edge in inhibited_edges:
-        u, v = edge
-        if in_degree[v] == 1:  # CASE I
-            bin_of_edges = r.exactly_one_one_inhibited(g, u, v, bin_of_edges)
-        if in_degree[v] > 1 and inhibition_degree[v] == 1:  # CASE II
-            bin_of_edges = r.more_than_one_one_inhibited(g, u, v, bin_of_edges)
-        # if in_degree[v] > 1 and inhibition_degree[v] == 2:  # CASE II
-        # TODO
-        # if in_degree[v] > 1 and inhibition_degree[v] > 1 and \
-        #    in_degree[v] != inhibition_degree[v]:  # CASE not yet exists :)
-        # TODO every possible combination of AND OR over input set
-        #     pass  # many AND OR cases
-        if in_degree[v] == inhibition_degree[v] == 2:  # CASE III
-            bin_of_edges = r.two_or_more_all_inhibited(g, v, bin_of_edges)
-
-    for v in non_inhibited_vertices:
-        if in_degree[v] > 1:  # CASE VI
-            bin_of_edges = r.more_than_one_no_inhibited(g, v, bin_of_edges)
-        if in_degree[v] == 1:  # CASE V
-            bin_of_edges = r.exactly_one_no_inhibited(g, v, bin_of_edges)
-
-    bin_of_edges = helper_deadend_nodes(bin_of_edges)
-
-    # make a normal dict instead of default dict
-    bin_of_edges = defaultdict(list, ((k, list(v)) for k, v in bin_of_edges.iteritems()))
-    bin_of_edges = dict(bin_of_edges)
-    return bin_of_edges
-
-
-def helper_deadend_nodes(bin_of_edges):
-    """given {1:[2]} make it {1:[2], 2:[]}"""
-    for i in set(itertools.chain.from_iterable(bin_of_edges.values())):
-        if i not in bin_of_edges.keys():
-            bin_of_edges[i] = []
-    return bin_of_edges
-
-
 def add_to_not_feasible(d, not_feasible):
-    # not_feasible.setdefault(len(d), []).append(d)
     row = not_feasible[len(d)]
     row.append(d)  # change it
     not_feasible[len(d)] = row  # copies the row back (otherwise parent process won't see the changes)
@@ -186,15 +105,13 @@ def execute_algo(b, node_count):
         p.start()
 
         while len([1 for j in jobs if j.is_alive() == True]) >= NUMBER_OF_ALLOWED_PROCESSES:
-            time.sleep(.1)
+            time.sleep(1)
     while any([j.is_alive() for j in jobs]):
         logger.debug([j for j in jobs if j.is_alive() == True])
         logger.info('Processes completed %s out of %s' % (len([j for j in jobs if j.is_alive() == False]), len(b.keys())))
-        time.sleep(.1)
+        time.sleep(2)
     p.join()
 
-    # logger.info('Processes completed %s out of %s' % (len([j for j in jobs if j.is_alive() == False]), len(b.keys())))
-    # logger.info('We got infeasible dict %s' % not_feasible)
     logger.info('We got %s infeasible dicts' % len(not_feasible))
     logger.info('results are:\n%s' % result)
     logger.info('number of results: %s' % len(result))
@@ -205,66 +122,50 @@ def execute_algo(b, node_count):
     return result
 
 
-def set_up_random(node_count):
-    dict_graph, matrix_graph = generate_graph(node_count)
-    b = generate_bin_of_edges(dict_graph, matrix_graph)
-    b = op.convert_directed_to_undirected(b)  # DOMINATING!
-    add_input_graph_info_to_db(dict_graph, matrix_graph, b)
-    return b, node_count
-
-
-def set_up_preset(matrix_graph):
-    node_count = len(matrix_graph)
-    dict_graph = op.to_dict(matrix_graph)
-    b = generate_bin_of_edges(dict_graph, matrix_graph)
-    b = op.convert_directed_to_undirected(b)  # DOMINATING!
-    add_input_graph_info_to_db(dict_graph, matrix_graph, b)
-    return b, node_count
-
-
-def add_input_graph_info_to_db(dict_graph, matrix_graph, bin_of_edges):
-    row_id = d.get_max_id_from_db() + 1
-    in_degree, out_degree, \
-        inhibited_edges, inhibition_degree, \
-        inhibited_vertices, non_inhibited_vertices = get_graph_stats(dict_graph, matrix_graph)
-    d.insert_into_db(row_id=row_id,
-                     input_graph=dict_graph,
-                     input_matrix=matrix_graph,
-                     bin_of_edges=bin_of_edges,
-                     in_degree=in_degree,
-                     out_degree=out_degree,
-                     inhibited_edges=inhibited_edges,
-                     inhibition_degree=inhibition_degree,
-                     inhibited_vertices=inhibited_vertices,
-                     non_inhibited_vertices=non_inhibited_vertices)
-
-
 def get_known_incompatible(bin_of_edges):
     return {i: op.nodes_incompatible_with_dict(i, bin_of_edges) for i in bin_of_edges.keys()}
 
 
+def generate_connected_graph(number_of_nodes):
+    flag = False
+    while not flag:
+        matrix = op.generate_adj_matrix(number_of_nodes)
+        gg = g.Graph(matrix)
+        flag = gg.connected
+    return gg
+
+
 if __name__ == '__main__':
     d.if_not_exists_create_database()
-    number_of_nodes = 7
-    #for number_of_nodes in [20, 50, 75, 100]:
-    #    for i in range(1):
-    start = time.time()
     row_id = d.get_max_id_from_db() + 1
-    bin_of_edges, n_count = set_up_random(number_of_nodes)
-    #bin_of_edges, n_count = set_up_preset(ex.graph_II)
-    logger.info('bin of nodes: %s' % bin_of_edges)
-    # logger.info('We got %s nodes. Entire list is: %s' % (len(bin_of_edges.keys()), bin_of_edges.keys()))
+    start = time.time()
 
+    number_of_nodes = 7
+    graph_instance = generate_connected_graph(number_of_nodes)
+    # graph_instance = g.Graph(ex.graph_II)
+    bin_of_edges = b.generate_bin_of_edges(graph_instance)
     known_incompatible_nodes = get_known_incompatible(bin_of_edges)
-    # logger.info('known incompatible nodes : %s' % known_incompatible_nodes)
+    result = execute_algo(bin_of_edges, number_of_nodes)
 
-    result = execute_algo(bin_of_edges, n_count)
-    logger.info('Execution time: %s' % str(time.time() - start))
-    d.insert_into_db(row_id,
+    duration = str(time.time() - start)
+    logger.info('Execution time: %s' % duration)
+
+    d.insert_into_db(row_id=row_id,
+                     bin_of_edges=bin_of_edges,
+
                      number_of_nodes=number_of_nodes,
-                     running_time=str(time.time() - start),
-                     known_incompatible_nodes=known_incompatible_nodes)
-    # logger.info('cnt of inc nodes %s' % cnt_inc_nodes)
-    # main()
+                     running_time=duration,
+                     known_incompatible_nodes=known_incompatible_nodes,
+
+                     input_graph=graph_instance.dict_graph,
+                     input_matrix=graph_instance.matrix_graph,
+                     in_degree=graph_instance.in_degree,
+                     out_degree=graph_instance.out_degree,
+                     inhibited_edges=graph_instance.inhibited_edges,
+                     inhibition_degree=graph_instance.inhibition_degree,
+                     inhibited_vertices=graph_instance.inhibited_vertices,
+                     non_inhibited_vertices=graph_instance.non_inhibited_vertices)
+
     one_time.draw_graph_for_every_input_matrix(row_id)
     one_time.draw_graph_for_every_non_empty_result(row_id)
+

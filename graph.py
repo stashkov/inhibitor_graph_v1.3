@@ -9,8 +9,10 @@ class Graph(object):
         self.out_degree = self.get_out_degree(self.matrix_graph)
         self.vertices = Graph.get_vertices(self.matrix_graph)
         self.inhibited_edges = Graph.get_inhibited_edges(self.matrix_graph)
-        self.inhibited_degree = Graph.get_inhibited_degree(self.matrix_graph)
+        self.inhibition_degree = Graph.get_inhibited_degree(self.matrix_graph)
         self.connected = Graph.is_connected(self.dict_graph)
+        self.inhibited_vertices = set([edge[1] for edge in self.inhibited_edges])
+        self.non_inhibited_vertices = list(set(self.dict_graph.keys()) - self.inhibited_vertices)
 
     @staticmethod
     def to_dict(matrix_graph):
@@ -61,7 +63,7 @@ class Graph(object):
     @staticmethod
     def get_inhibited_degree(matrix_graph):
         vertices = Graph.get_vertices(matrix_graph)
-        inh_degree_dict = []
+        inh_degree_dict = dict()
         for i in range(len(matrix_graph)):
             for j in range(len(matrix_graph)):
                 if matrix_graph[i][j] == -1:

@@ -5,6 +5,7 @@ import db_functions as df
 import numpy
 import draw_graph as dg
 import graph_op as op
+import graph as g
 
 
 def in_degree_statistics():
@@ -42,7 +43,7 @@ def draw_graph_for_every_non_empty_result(row_id=''):
             input_graph = eval(input_graph)
             for i, r in enumerate(results):
                 r = op.convert_undirected_to_directed(r, input_graph)
-                m = op.to_adj_matrix(r)
+                m = g.Graph.to_adj_matrix(r)
                 dg.draw_graph(m, vertices=sorted(r.keys()), name='input_' + str(row_id) + '_res_' + str(i+1) + '_of_' + str(len(results)))
 
 if __name__ == '__main__':

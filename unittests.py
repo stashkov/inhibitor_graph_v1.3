@@ -407,8 +407,8 @@ class TestGet_nodes_incompatible_inside_dict(TestCase):
 class TestGenerate_graph(TestCase):
     def test_generate_graph(self):
         # since function is random, at least we can test the size of the returning obj
-        self.assertEqual(len(i.generate_graph(5)[0]), 5)
-        self.assertEqual(len(i.generate_graph(5)[1]), 5)
+        self.assertEqual(len(i.generate_connected_graph(5)[0]), 5)
+        self.assertEqual(len(i.generate_connected_graph(5)[1]), 5)
 
 
 class TestGenerate_bin_of_edges(TestCase):
