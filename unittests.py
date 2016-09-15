@@ -1,10 +1,10 @@
-import unittest
 from unittest import TestCase
 from collections import defaultdict
-
+import graph as gr
 import graph_op as op
 import example_graphs as ex
-import inhibition as i
+import main as i
+import bin_of_edges
 from rule import exactly_one_one_inhibited, more_than_one_one_inhibited, exactly_one_no_inhibited, \
     more_than_one_no_inhibited, two_or_more_all_inhibited
 
@@ -33,119 +33,119 @@ class TestRemove_incompatible_nodes(TestCase):
 
 class TestOut_degree(TestCase):
     def test_out_degree_I(self):
-        self.assertEqual(op.out_degree(ex.graph_I), {'1': 1, '2': 1, '3': 0})
+        self.assertEqual(gr.Graph.get_out_degree(ex.graph_I), {'1': 1, '2': 1, '3': 0})
 
     def test_out_degree_II(self):
-        self.assertEqual(op.out_degree(ex.graph_II), {'1': 1, '2': 1, '3': 0})
+        self.assertEqual(gr.Graph.get_out_degree(ex.graph_II), {'1': 1, '2': 1, '3': 0})
 
     def test_out_degree_III(self):
-        self.assertEqual(op.out_degree(ex.graph_III), {'1': 1, '2': 1, '3': 0})
+        self.assertEqual(gr.Graph.get_out_degree(ex.graph_III), {'1': 1, '2': 1, '3': 0})
 
     def test_out_degree_IV(self):
-        self.assertEqual(op.out_degree(ex.graph_IV), {'1': 1, '2': 1, '3': 0})
+        self.assertEqual(gr.Graph.get_out_degree(ex.graph_IV), {'1': 1, '2': 1, '3': 0})
 
     def test_out_degree_V(self):
-        self.assertEqual(op.out_degree(ex.graph_V), {'1': 1, '2': 0})
+        self.assertEqual(gr.Graph.get_out_degree(ex.graph_V), {'1': 1, '2': 0})
 
     def test_out_degree_VI(self):
-        self.assertEqual(op.out_degree(ex.graph_VI), {'1': 1, '2': 1, '3': 0})
+        self.assertEqual(gr.Graph.get_out_degree(ex.graph_VI), {'1': 1, '2': 1, '3': 0})
 
     def test_out_degree_X(self):
-        self.assertEqual(op.out_degree(ex.graph_X), {'1': 1, '2': 1, '3': 1, '4': 0})
+        self.assertEqual(gr.Graph.get_out_degree(ex.graph_X), {'1': 1, '2': 1, '3': 1, '4': 0})
 
     def test_out_degree_test(self):
-        self.assertEqual(op.out_degree(ex.graph_test), {'1': 1, '2': 1, '3': 2, '4': 0, '5': 1, '6': 1, '7': 0})
+        self.assertEqual(gr.Graph.get_out_degree(ex.graph_test), {'1': 1, '2': 1, '3': 2, '4': 0, '5': 1, '6': 1, '7': 0})
 
     def test_out_degree_XXI(self):
-        self.assertEqual(op.out_degree(ex.graph_XXI), {'1': 4, '2': 1, '3': 1, '4': 0, '5': 0})
+        self.assertEqual(gr.Graph.get_out_degree(ex.graph_XXI), {'1': 4, '2': 1, '3': 1, '4': 0, '5': 0})
 
 
 class TestIn_degree(TestCase):
     def test_in_degree_I(self):
-        self.assertEqual(op.in_degree(ex.graph_I), {'1': 0, '2': 1, '3': 1})
+        self.assertEqual(gr.Graph.get_in_degree(ex.graph_I), {'1': 0, '2': 1, '3': 1})
 
     def test_in_degree_II(self):
-        self.assertEqual(op.in_degree(ex.graph_II), {'1': 0, '2': 0, '3': 2})
+        self.assertEqual(gr.Graph.get_in_degree(ex.graph_II), {'1': 0, '2': 0, '3': 2})
 
     def test_in_degree_III(self):
-        self.assertEqual(op.in_degree(ex.graph_III), {'1': 0, '2': 0, '3': 2})
+        self.assertEqual(gr.Graph.get_in_degree(ex.graph_III), {'1': 0, '2': 0, '3': 2})
 
     def test_in_degree_IV(self):
-        self.assertEqual(op.in_degree(ex.graph_IV), {'1': 0, '2': 1, '3': 1})
+        self.assertEqual(gr.Graph.get_in_degree(ex.graph_IV), {'1': 0, '2': 1, '3': 1})
 
     def test_in_degree_V(self):
-        self.assertEqual(op.in_degree(ex.graph_V), {'1': 0, '2': 1})
+        self.assertEqual(gr.Graph.get_in_degree(ex.graph_V), {'1': 0, '2': 1})
 
     def test_in_degree_VI(self):
-        self.assertEqual(op.in_degree(ex.graph_VI), {'1': 0, '2': 0, '3': 2})
+        self.assertEqual(gr.Graph.get_in_degree(ex.graph_VI), {'1': 0, '2': 0, '3': 2})
 
     def test_in_degree_X(self):
-        self.assertEqual(op.in_degree(ex.graph_X), {'1': 0, '2': 0, '3': 0, '4': 3})
+        self.assertEqual(gr.Graph.get_in_degree(ex.graph_X), {'1': 0, '2': 0, '3': 0, '4': 3})
 
     def test_in_degree_test(self):
-        self.assertEqual(op.in_degree(ex.graph_test), {'1': 0, '2': 0, '3': 2, '4': 1, '5': 1, '6': 1, '7': 1})
+        self.assertEqual(gr.Graph.get_in_degree(ex.graph_test), {'1': 0, '2': 0, '3': 2, '4': 1, '5': 1, '6': 1, '7': 1})
 
     def test_in_degree_XXI(self):
-        self.assertEqual(op.in_degree(ex.graph_XXI), {'1': 0, '2': 1, '3': 1, '4': 2, '5': 2})
+        self.assertEqual(gr.Graph.get_in_degree(ex.graph_XXI), {'1': 0, '2': 1, '3': 1, '4': 2, '5': 2})
 
 
 class TestInhibited_edges(TestCase):
     def test_inhibited_edges_I(self):
-        self.assertEqual(op.inhibited_edges(ex.graph_I), ([('1', '2')], {'2': 1}))
+        self.assertEqual(gr.Graph.get_inhibited_edges(ex.graph_I), [('1', '2')])
 
     def test_inhibited_edges_II(self):
-        self.assertEqual(op.inhibited_edges(ex.graph_II), ([('2', '3')], {'3': 1}))
+        self.assertEqual(gr.Graph.get_inhibited_edges(ex.graph_II), [('2', '3')])
 
     def test_inhibited_edges_III(self):
-        self.assertEqual(op.inhibited_edges(ex.graph_III), ([('1', '3'), ('2', '3')], {'3': 2}))
+        self.assertEqual(gr.Graph.get_inhibited_edges(ex.graph_III), [('1', '3'), ('2', '3')])
 
     def test_inhibited_edges_IV(self):
-        self.assertEqual(op.inhibited_edges(ex.graph_IV), ([('1', '2'), ('2', '3')], {'2': 1, '3': 1}))
+        self.assertEqual(gr.Graph.get_inhibited_edges(ex.graph_IV), [('1', '2'), ('2', '3')])
 
     def test_inhibited_edges_V(self):
-        self.assertEqual(op.inhibited_edges(ex.graph_V), ([], {}))
+        self.assertEqual(gr.Graph.get_inhibited_edges(ex.graph_V), [])
 
     def test_inhibited_edges_VI(self):
-        self.assertEqual(op.inhibited_edges(ex.graph_VI), ([], {}))
+        self.assertEqual(gr.Graph.get_inhibited_edges(ex.graph_VI), [])
 
     def test_inhibited_edges_X(self):
-        self.assertEqual(op.inhibited_edges(ex.graph_X), ([('1', '4'), ('2', '4'), ('3', '4')], {'4': 3}))
+        self.assertEqual(gr.Graph.get_inhibited_edges(ex.graph_X), [('1', '4'), ('2', '4'), ('3', '4')])
 
     def test_inhibited_edges_test(self):
-        self.assertEqual(op.inhibited_edges(ex.graph_test), ([('3', '4'), ('5', '6')], {'4': 1, '6': 1}))
+        self.assertEqual(gr.Graph.get_inhibited_edges(ex.graph_test), [('3', '4'), ('5', '6')])
 
     def test_inhibited_edges_XXI(self):
-        self.assertEqual(op.inhibited_edges(ex.graph_XXI), ([('1', '2'), ('3', '5')], {'2': 1, '5': 1}))
+        self.assertEqual(gr.Graph.get_inhibited_edges(ex.graph_XXI), [('1', '2'), ('3', '5')])
 
 
 class TestConvert_adj_matrix_to_dict(TestCase):
     def test_convert_adj_matrix_to_dict_I(self):
-        self.assertEqual(op.to_dict(ex.graph_I), {'1': ['2'], '2': ['3'], '3': []})
+        self.assertEqual(gr.Graph.to_dict(ex.graph_I), {'1': ['2'], '2': ['3'], '3': []})
 
     def test_convert_adj_matrix_to_dict_II(self):
-        self.assertEqual(op.to_dict(ex.graph_II), {'1': ['3'], '2': ['3'], '3': []})
+        self.assertEqual(gr.Graph.to_dict(ex.graph_II), {'1': ['3'], '2': ['3'], '3': []})
 
     def test_convert_adj_matrix_to_dict_III(self):
-        self.assertEqual(op.to_dict(ex.graph_III), {'1': ['3'], '2': ['3'], '3': []})
+        self.assertEqual(gr.Graph.to_dict(ex.graph_III), {'1': ['3'], '2': ['3'], '3': []})
 
     def test_convert_adj_matrix_to_dict_IV(self):
-        self.assertEqual(op.to_dict(ex.graph_IV), {'1': ['2'], '2': ['3'], '3': []})
+        self.assertEqual(gr.Graph.to_dict(ex.graph_IV), {'1': ['2'], '2': ['3'], '3': []})
 
     def test_convert_adj_matrix_to_dict_V(self):
-        self.assertEqual(op.to_dict(ex.graph_V), {'1': ['2'], '2': []})
+        self.assertEqual(gr.Graph.to_dict(ex.graph_V), {'1': ['2'], '2': []})
 
     def test_convert_adj_matrix_to_dict_VI(self):
-        self.assertEqual(op.to_dict(ex.graph_VI), {'1': ['3'], '2': ['3'], '3': []})
+        self.assertEqual(gr.Graph.to_dict(ex.graph_VI), {'1': ['3'], '2': ['3'], '3': []})
 
     def test_convert_adj_matrix_to_dict_X(self):
-        self.assertEqual(op.to_dict(ex.graph_X), {'1': ['4'], '2': ['4'], '3': ['4'], '4': []})
+        self.assertEqual(gr.Graph.to_dict(ex.graph_X), {'1': ['4'], '2': ['4'], '3': ['4'], '4': []})
 
     def test_convert_adj_matrix_to_dict_test(self):
-        self.assertEqual(op.to_dict(ex.graph_test),
+        self.assertEqual(gr.Graph.to_dict(ex.graph_test),
                          {'1': ['3'], '2': ['3'], '3': ['4', '5'], '4': [], '5': ['6'], '6': ['7'], '7': []})
 
     def test_convert_adj_matrix_to_dict_XXI(self):
-        self.assertEqual(op.to_dict(ex.graph_XXI),
+        self.assertEqual(gr.Graph.to_dict(ex.graph_XXI),
                          {'1': ['2', '3', '4', '5'], '2': ['4'], '3': ['5'], '4': [], '5': []})
 
 
@@ -244,7 +244,7 @@ class TestExactly_one_one_inhibited(TestCase):
     # CASE I.1 and I.2
     def test_exactly_one_one_inhibited_len_1(self):
         u, v = '1', '2'  # edge u-->v is inhibited
-        g = op.to_dict(ex.graph_I)
+        g = gr.Graph.to_dict(ex.graph_I)
         bin = defaultdict(set)
         correct_answer = {'2T': set(['3T']), '1T': set(['2F']), '1F': set(['2T'])}
         self.assertEqual(exactly_one_one_inhibited(g, u, v, bin), correct_answer)
@@ -272,7 +272,7 @@ class TestMore_than_one_one_inhibited(TestCase):
     # CASE II
     def test_more_than_one_one_inhibited_len_1(self):
         u, v = '2', '3'  # edge u-->v is inhibited
-        g = op.to_dict(ex.graph_II)
+        g = gr.Graph.to_dict(ex.graph_II)
         bin = defaultdict(set)
         correct_answer = {'2T': ['3T'], '1T': ['3F'], '1F2T': ['3T'], '1F': ['3T'], '2F': ['3F'], '1T2F': ['3F']}
         for key, value in correct_answer.iteritems():
@@ -304,7 +304,7 @@ class TestExactly_one_no_inhibited(TestCase):
     # CASE V
     def test_exactly_one_no_inhibited(self):
         v = '2'
-        g = op.to_dict(ex.graph_V)
+        g = gr.Graph.to_dict(ex.graph_V)
         bin = defaultdict(set)
         correct_answer = {'1T': ['2T'], '1F': ['2F']}
         for key, value in correct_answer.iteritems():
@@ -357,7 +357,7 @@ class Testtwo_or_more_all_inhibited(TestCase):
     # CASE III
     def test_two_or_more_all_inhibited(self):
         v = '3'
-        g = op.to_dict(ex.graph_III)
+        g = gr.Graph(ex.graph_III).dict_graph
         bin = defaultdict(set)
         correct_answer = {'2T': ['3F'], '2F': ['3T'],
                           '1F': ['3T'], '1T': ['3F'],
@@ -381,7 +381,7 @@ class Testtwo_or_more_all_inhibited(TestCase):
 class TestTo_adj_matrix(TestCase):
     def test_to_adj_matrix(self):
         g = {'1': ['3'], '2': ['3'], '3': []}
-        self.assertEqual(op.to_adj_matrix(g), [[0, 0, 1], [0, 0, 1], [0, 0, 0]])
+        self.assertEqual(gr.Graph.to_adj_matrix(g), [[0, 0, 1], [0, 0, 1], [0, 0, 0]])
 
 
 class Testget_number_of_nodes(TestCase):
@@ -407,42 +407,46 @@ class TestGet_nodes_incompatible_inside_dict(TestCase):
 class TestGenerate_graph(TestCase):
     def test_generate_graph(self):
         # since function is random, at least we can test the size of the returning obj
-        self.assertEqual(len(i.generate_connected_graph(5)[0]), 5)
-        self.assertEqual(len(i.generate_connected_graph(5)[1]), 5)
+        self.assertEqual(len(i.generate_connected_graph(5).matrix_graph), 5)
+        self.assertEqual(len(i.generate_connected_graph(5).matrix_graph), 5)
 
 
 class TestGenerate_bin_of_edges(TestCase):
     def test_generate_bin_of_edges(self):
-        g = {'1': ['3'], '2': ['3'], '3': []}
         m = [[0, 0, 1], [0, 0, 1], [0, 0, 0]]
+        gg = gr.Graph(m)
         correct_answer = {'2T': ['3T'], '2F': ['3F'], '1T': ['3T'], '1T2T': ['3T'], '1F': ['3F'], '3F': [], '3T': []}
-        self.assertEqual(i.generate_bin_of_edges(g, m), correct_answer)
+        self.assertEqual(bin_of_edges.generate_bin_of_edges(gg), correct_answer)
 
     def test_generate_bin_of_edges_inhib(self):
-        g = {'1': ['3'], '2': ['3'], '3': []}
+        # g = {'1': ['3'], '2': ['3'], '3': []}
         m = [[0, 0, 1], [0, 0, -1], [0, 0, 0]]
+        gg = gr.Graph(m)
         correct_answer = {'2T': ['3T'], '1T': ['3F'], '1F2T': ['3T'], '3T': [],
                           '1F': ['3T'], '2F': ['3F'], '1T2F': ['3F'], '3F': []}
-        self.assertEqual(i.generate_bin_of_edges(g, m), correct_answer)
+        self.assertEqual(bin_of_edges.generate_bin_of_edges(gg), correct_answer)
 
     def test_generate_bin_of_edges_inhib_degree_2(self):
-        g = {'1': ['3'], '2': ['3'], '3': []}
+        # g = {'1': ['3'], '2': ['3'], '3': []}
         m = [[0, 0, -1], [0, 0, -1], [0, 0, 0]]
+        gg = gr.Graph(m)
         correct_answer = {'2T': ['3F'], '1F2F': ['3T'], '1T2T': ['3F'], '2F': ['3T'],
                           '1F': ['3T'], '1T': ['3F'], '3F': [], '3T': []}
-        self.assertEqual(i.generate_bin_of_edges(g, m), correct_answer)
+        self.assertEqual(bin_of_edges.generate_bin_of_edges(gg), correct_answer)
 
     def test_generate_bin_of_edges_inhib_degree_1(self):
-        g = {'1': ['2'], '2': []}
+        # g = {'1': ['2'], '2': []}
         m = [[0, -1], [0, 0]]
+        gg = gr.Graph(m)
         correct_answer = {'2T': [], '2F': [], '1T': ['2F'], '1F': ['2T']}
-        self.assertEqual(i.generate_bin_of_edges(g, m), correct_answer)
+        self.assertEqual(bin_of_edges.generate_bin_of_edges(gg), correct_answer)
 
     def test_generate_bin_of_edges_inhib_degree_0(self):
-        g = {'1': ['2'], '2': []}
+        # g = {'1': ['2'], '2': []}
         m = [[0, 1], [0, 0]]
+        gg = gr.Graph(m)
         correct_answer = {'2T': [], '2F': [], '1T': ['2T'], '1F': ['2F']}
-        self.assertEqual(i.generate_bin_of_edges(g, m), correct_answer)
+        self.assertEqual(bin_of_edges.generate_bin_of_edges(gg), correct_answer)
 
 
 # class TestExecute_algo(TestCase):
@@ -561,5 +565,5 @@ class TestConvert_undirected_to_directed(TestCase):
 
     def test_2_node(self):
         graph = {'1T': ['2T'], '2T': ['1F']}
-        result = {'1T':['2T'], '2T': []}
+        result = {'1T': ['2T'], '2T': []}
         self.assertEqual(op.convert_undirected_to_directed(graph, self.initial_2_node), result)
