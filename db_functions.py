@@ -4,29 +4,43 @@ import platform
 
 
 if platform.system() == 'Windows':
-    path_to_db = r'D:/Dropbox/PyCharm_projects/inhibitor_graph_v1.1/inhibition.db'
-    path_to_schema = r'D:/Dropbox/PyCharm_projects/inhibitor_graph_v1.1/sql/create_schema.sql'
+    path_to_db = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'inhibition.db')
+    path_to_schema = r'D:/Dropbox/PyCharm_projects/inhibitor_graph_v1.2/sql/create_schema.sql'
 else:
     path_to_db = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'inhibition.db')
-    path_to_schema = r'/Users/vstashkov/PycharmProjects/learning/inhibitor/sql/create_schema.sql'
+    path_to_schema = r'D:/Dropbox/PyCharm_projects/inhibitor_graph_v1.2/sql/create_schema.sql'
 
 
 def insert_into(row_id,
-                number_of_nodes=None,
-                input_graph=None,
-                input_matrix=None,
-                inhibited_edges=None,
-                in_degree=None,
-                out_degree=None,
-                inhibition_degree=None,
-                inhibited_vertices=None,
-                non_inhibited_vertices=None,
+                graph_instance=None,
                 known_incompatible_nodes=None,
                 bin_of_edges=None,
                 number_of_not_feasible=None,
                 results=None,
                 number_of_results=None,
                 running_time=None):
+
+    if graph_instance:
+        number_of_nodes = graph_instance.number_of_nodes
+        input_graph = graph_instance.dict_graph
+        input_matrix = graph_instance.matrix_graph
+        in_degree = graph_instance.in_degree
+        out_degree = graph_instance.out_degree
+        inhibited_edges = graph_instance.inhibited_edges
+        inhibition_degree = graph_instance.inhibition_degree
+        inhibited_vertices = graph_instance.inhibited_vertices
+        non_inhibited_vertices = graph_instance.non_inhibited_vertices
+    else:
+        number_of_nodes = None
+        input_graph = None
+        input_matrix = None
+        in_degree = None
+        out_degree = None
+        inhibited_edges = None
+        inhibition_degree = None
+        inhibited_vertices = None
+        non_inhibited_vertices = None
+
     conn = connect_to_db()
     c = conn.cursor()
 

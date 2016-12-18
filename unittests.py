@@ -157,51 +157,9 @@ class TestGenerate_adj_matrix(TestCase):
 
 
 class TestInc_nodes(TestCase):
-    def test_inc_nodes_composite_node(self):
-        n = '5T88F'
-        correct_answer = ['5F88T', '5T', '88F', '5F', '88T']
-        self.assertEqual(op.incompatible_nodes(n), correct_answer)
-
-    def test_inc_nodes_simple_node(self):
-        n = '5T'
-        correct_answer = ['5F']
-        self.assertEqual(op.incompatible_nodes(n), correct_answer)
-
-
-class TestInc_nodes(TestCase):
-    def test_nodes_incompatible_with_dict_simple_node_incompatible(self):
-        n = '123F'
-        d = {'1F': ['123T'],
-             '5F': ['123F5T', '1F'],
-             '88T12F': ['123F7T', '5F'],
-             '123F': [],
-             '123T': [],
-             '123F7T': [],
-             '123F5T': []}
-        correct_answer = ['123T', '123F7T', '123F5T']
-        self.assertEqual(op.nodes_incompatible_with_dict(n, d), correct_answer)
-
     def test_nodes_incompatible_with_dict_simple_node_compatible(self):
         n = '123F'
-        d = {'1F': ['12T'], '5F': ['12F5T', '16T'], '88T12F': ['12T7T', '5F'], '123F': []}
-        correct_answer = []
-        self.assertEqual(op.nodes_incompatible_with_dict(n, d), correct_answer)
-
-    def test_nodes_incompatible_with_dict_comp_node_incompatible(self):
-        n = '12F8T'
-        d = {'1F': ['123T'], '5F': ['123F5T', '16T'], '88T12F': ['123T7T', '12F'], '12F8T': [], '12F': []}
-        correct_answer = ['12F', '88T12F']
-        self.assertEqual(op.nodes_incompatible_with_dict(n, d), correct_answer)
-
-    def test_nodes_incompatible_with_dict_comp_node_incompatible_1(self):
-        n = '12F8T'
-        d = {'1F': ['123T'], '5F': ['123F5T', '16T'], '88T12F': ['123T7T', '12F'], '12F8T': []}
-        correct_answer = ['88T12F']
-        self.assertEqual(op.nodes_incompatible_with_dict(n, d), correct_answer)
-
-    def test_nodes_incompatible_with_dict_comp_node_compatible(self):
-        n = '12F8T'
-        d = {'12F8T': ['123T'], '1F': ['123T'], '5F': ['123F5T', '16T'], '88F13F': ['123T7T', '5F']}
+        d = {'1F': ['12T'], '5F': ['12F', '16T'], '12F': ['12T', '5F'], '123F': []}
         correct_answer = []
         self.assertEqual(op.nodes_incompatible_with_dict(n, d), correct_answer)
 
@@ -387,21 +345,21 @@ class TestTo_adj_matrix(TestCase):
 class Testget_number_of_nodes(TestCase):
     def test_get_number_of_nodes(self):
         d = {'1T': ['3T'], '2T': ['3T'], '3T': []}
-        self.assertEqual(op.get_number_of_nodes(d), 3)
+        self.assertEqual(op.number_of_nodes(d), 3)
 
     def test_get_number_of_nodes_composite(self):
         d = {'1T6T': ['3T'], '2T': ['3T'], '3T': []}
-        self.assertEqual(op.get_number_of_nodes(d), 4)
+        self.assertEqual(op.number_of_nodes(d), 4)
 
     def test_get_number_of_nodes_composite_1(self):
         d = {'1T': ['2T'], '2T': []}
-        self.assertEqual(op.get_number_of_nodes(d), 2)
+        self.assertEqual(op.number_of_nodes(d), 2)
 
 
 class TestGet_nodes_incompatible_inside_dict(TestCase):
     def test_get_nodes_incompatible_inside_dict(self):
         d = {'5T': ['6F'], '5F': ['6T'], '6F': [], '6T': []}
-        self.assertEqual(op.get_nodes_incompatible_inside_dict(d), ['5T', '5F', '6T', '6F'])
+        self.assertEqual(op.nodes_incompatible_within_dict(d), ['5T', '5F', '6T', '6F'])
 
 
 class TestGenerate_graph(TestCase):

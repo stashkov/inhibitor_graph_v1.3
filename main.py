@@ -4,7 +4,7 @@ import copy
 import itertools
 import logging
 import time
-from multiprocessing import Process, Manager, cpu_count
+# from multiprocessing import Process, Manager, cpu_count
 import threading, Queue
 import example_graphs as ex
 import db_functions as dbfunc
@@ -14,7 +14,7 @@ import bin_of_edges as b
 
 
 
-NUMBER_OF_ALLOWED_PROCESSES = cpu_count() - 1
+# NUMBER_OF_ALLOWED_PROCESSES = cpu_count() - 1
 logger = logging.getLogger(__name__)
 #logging.basicConfig(level=logging.INFO, filename='hello.log')
 logging.basicConfig(level=logging.INFO)
@@ -31,15 +31,15 @@ def recursive_teardown(node, dict_graph, node_count, result, not_feasible_dicts,
     logger.debug('we got dict %s' % dict_graph)
     dict_graph = remove_incompatible_nodes(dict_graph, known_incompatible[node])
     logger.debug('after removal we have %s' % dict_graph)
-    if dict_graph in not_feasible_dicts[len(dict_graph)]:
+    if dict_graph in not_feasible_dicts[len(dict_graph)-1]:
         logger.debug('this dict is incompatible because it was in inc list')
         return
-    if node_count > op.get_number_of_nodes(dict_graph):
+    if node_count > op.number_of_nodes(dict_graph):
         logger.debug('this dict is incompatible because original node count %i > current node count %i' % (
-            node_count, op.get_number_of_nodes(dict_graph)))
+            node_count, op.number_of_nodes(dict_graph)))
         not_feasible_dicts = add_to_list_of_not_feasible_dicts(dict_graph, not_feasible_dicts)
         return
-    nodes_inside = op.get_nodes_incompatible_inside_dict(dict_graph)
+    nodes_inside = op.nodes_incompatible_within_dict(dict_graph)
     logger.debug('incompatible nodes inside dict: %s' % nodes_inside)
     if nodes_inside:  # check if dbfunc is incompatible with itself
         for i in nodes_inside:
@@ -80,13 +80,22 @@ def remove_incompatible_nodes(d, incompatible_nodes):
 
 
 def process_sequentially(b, node_count):
-    shared_results, shared_not_feasible_dicts = set_up_shared_variables(len(b))
+    shared_results, shared_not_feasible_dicts = [], []
+    for i in range(len(b)):  # empty list of lists to hold corresponding length incompatible dictionaries
+        shared_not_feasible_dicts.append([])
+
+    print shared_not_feasible_dicts
+
     global known_incompatible_nodes
 
     for i in b.keys():
         temp_ = copy.deepcopy(b)
+        t1 = time.time()
         logger.info('Next iteration. Working with node %s, which is #%s out of %s' % (i, b.keys().index(i) + 1, len(b.keys())))
-        recursive_teardown(i, temp_, node_count, shared_results, shared_not_feasible_dicts, known_incompatible_nodes)
+        logger.info('Out degree of this node is %s' % len(b[i]))
+        if len(b[i]) == max([len(b[i]) for i in b.keys()]): # TODO remove this line
+            recursive_teardown(i, temp_, node_count, shared_results, shared_not_feasible_dicts, known_incompatible_nodes)
+        logger.info('Time spent on this node %s\n' % str(time.time() - t1))
 
     logger.info('We got %s infeasible dicts' % sum([len(i) for i in shared_not_feasible_dicts]))
     logger.info('results are:\n%s' % shared_results)
@@ -159,10 +168,10 @@ if __name__ == '__main__':
     row_id = dbfunc.get_max_id() + 1
     start = time.time()
 
-    number_of_nodes = 5
+    number_of_nodes = 15
 
-    graph_instance = generate_connected_graph(number_of_nodes)
-    #ggg = ex.graph_6_nodes; graph_instance = g.Graph(ggg); number_of_nodes = len(ggg)
+    # graph_instance = generate_connected_graph(number_of_nodes)
+    ggg = ex.graph_II; graph_instance = g.Graph(ggg); number_of_nodes = len(ggg)
 
     bin_of_edges = b.generate_bin_of_edges(graph_instance)
     # bin_of_edges = op.convert_directed_to_undirected(bin_of_edges)  # experimental
@@ -175,24 +184,14 @@ if __name__ == '__main__':
 
     duration = str(time.time() - start)
     logger.info('Execution time: %s' % duration)
+    logger.info('id of the graph in database %s' % row_id)
 
     dbfunc.insert_into(row_id=row_id,
+                       graph_instance=graph_instance,
                        bin_of_edges=bin_of_edges,
-
                        running_time=duration,
-                       known_incompatible_nodes=known_incompatible_nodes,
-
-                       number_of_nodes=graph_instance.number_of_nodes,
-                       input_graph=graph_instance.dict_graph,
-                       input_matrix=graph_instance.matrix_graph,
-                       in_degree=graph_instance.in_degree,
-                       out_degree=graph_instance.out_degree,
-                       inhibited_edges=graph_instance.inhibited_edges,
-                       inhibition_degree=graph_instance.inhibition_degree,
-                       inhibited_vertices=graph_instance.inhibited_vertices,
-                       non_inhibited_vertices=graph_instance.non_inhibited_vertices)
+                       known_incompatible_nodes=known_incompatible_nodes)
 
     dg.draw_input_graph(row_id)
     dg.draw_result_graph(row_id)
-
 
