@@ -86,7 +86,7 @@ def process_sequentially(b, node_count):
     for i in b.keys():
         temp_ = copy.deepcopy(b)
         logger.info('Next iteration. Working with node %s, which is #%s out of %s' % (i, b.keys().index(i) + 1, len(b.keys())))
-        recursive_teardown(i, temp_, node_count, result, shared_not_feasible_dicts, known_incompatible_nodes)
+        recursive_teardown(i, temp_, node_count, shared_results, shared_not_feasible_dicts, known_incompatible_nodes)
 
     logger.info('We got %s infeasible dicts' % sum([len(i) for i in shared_not_feasible_dicts]))
     logger.info('results are:\n%s' % shared_results)
@@ -155,22 +155,23 @@ def generate_connected_graph(number_of_nodes):
 
 
 if __name__ == '__main__':
-    # # for i in range(20):
     dbfunc.create_database()
     row_id = dbfunc.get_max_id() + 1
     start = time.time()
 
-    number_of_nodes = 15
+    number_of_nodes = 5
 
     graph_instance = generate_connected_graph(number_of_nodes)
     #ggg = ex.graph_6_nodes; graph_instance = g.Graph(ggg); number_of_nodes = len(ggg)
 
     bin_of_edges = b.generate_bin_of_edges(graph_instance)
-    bin_of_edges = op.convert_directed_to_undirected(bin_of_edges)  # experimental
+    # bin_of_edges = op.convert_directed_to_undirected(bin_of_edges)  # experimental
     known_incompatible_nodes = get_known_incompatible(bin_of_edges)
 
-    result = process_parallel(bin_of_edges, number_of_nodes)
-    # result = process_sequentially(bin_of_edges, number_of_nodes)
+    print bin_of_edges
+
+    # result = process_parallel(bin_of_edges, number_of_nodes)
+    result = process_sequentially(bin_of_edges, number_of_nodes)
 
     duration = str(time.time() - start)
     logger.info('Execution time: %s' % duration)

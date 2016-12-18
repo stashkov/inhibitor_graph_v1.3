@@ -7,7 +7,7 @@ if platform.system() == 'Windows':
     path_to_db = r'D:/Dropbox/PyCharm_projects/inhibitor_graph_v1.1/inhibition.db'
     path_to_schema = r'D:/Dropbox/PyCharm_projects/inhibitor_graph_v1.1/sql/create_schema.sql'
 else:
-    path_to_db = r'/Users/vstashkov/PycharmProjects/learning/inhibitor/inhibition.db'
+    path_to_db = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'inhibition.db')
     path_to_schema = r'/Users/vstashkov/PycharmProjects/learning/inhibitor/sql/create_schema.sql'
 
 
